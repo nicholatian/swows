@@ -1,0 +1,2 @@
+Place the ROM file for Pokemon Emerald version in here. It should be named
+"emer.gba" to be picked up by the Makefiles.
