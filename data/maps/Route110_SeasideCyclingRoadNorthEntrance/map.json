@@ -1,0 +1,83 @@
+{
+    "allow_bike": true,
+    "allow_escape_rope": false,
+    "allow_running": false,
+    "battle_scene": "MAP_BATTLE_SCENE_NORMAL",
+    "bg_events": [
+    ],
+    "connections": null,
+    "coord_events": [
+        {
+            "elevation": 3,
+            "script": "Route110_SeasideCyclingRoadNorthEntrance_EventScript_26EA84",
+            "type": "trigger",
+            "var": "VAR_TEMP_1",
+            "var_value": "0",
+            "x": 7,
+            "y": 4
+        },
+        {
+            "elevation": 3,
+            "script": "Route110_SeasideCyclingRoadNorthEntrance_EventScript_26EAB6",
+            "type": "trigger",
+            "var": "VAR_TEMP_1",
+            "var_value": "1",
+            "x": 5,
+            "y": 4
+        }
+    ],
+    "id": "MAP_ROUTE110_SEASIDE_CYCLING_ROAD_NORTH_ENTRANCE",
+    "layout": "LAYOUT_ROUTE110_SEASIDE_CYCLING_ROAD_ENTRANCE",
+    "map_type": "MAP_TYPE_INDOOR",
+    "music": "MUS_FINECITY",
+    "name": "Route110_SeasideCyclingRoadNorthEntrance",
+    "object_events": [
+        {
+            "elevation": 3,
+            "flag": "0",
+            "graphics_id": "EVENT_OBJ_GFX_MART_EMPLOYEE",
+            "movement_range_x": 0,
+            "movement_range_y": 0,
+            "movement_type": "MOVEMENT_TYPE_FACE_DOWN",
+            "script": "Route110_SeasideCyclingRoadNorthEntrance_EventScript_26EA78",
+            "trainer_sight_or_berry_tree_id": "0",
+            "trainer_type": "0",
+            "x": 7,
+            "y": 2
+        }
+    ],
+    "region_map_section": "MAPSEC_ROUTE_110",
+    "requires_flash": false,
+    "show_map_name": false,
+    "warp_events": [
+        {
+            "dest_map": "MAP_ROUTE110",
+            "dest_warp_id": 4,
+            "elevation": 0,
+            "x": 1,
+            "y": 5
+        },
+        {
+            "dest_map": "MAP_ROUTE110",
+            "dest_warp_id": 4,
+            "elevation": 0,
+            "x": 2,
+            "y": 5
+        },
+        {
+            "dest_map": "MAP_ROUTE110",
+            "dest_warp_id": 5,
+            "elevation": 0,
+            "x": 12,
+            "y": 5
+        },
+        {
+            "dest_map": "MAP_ROUTE110",
+            "dest_warp_id": 5,
+            "elevation": 0,
+            "x": 13,
+            "y": 5
+        }
+    ],
+    "weather": "WEATHER_NONE"
+}

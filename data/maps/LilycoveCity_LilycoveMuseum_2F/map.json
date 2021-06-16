@@ -1,0 +1,179 @@
+{
+    "allow_bike": false,
+    "allow_escape_rope": false,
+    "allow_running": true,
+    "battle_scene": "MAP_BATTLE_SCENE_NORMAL",
+    "bg_events": [
+        {
+            "elevation": 0,
+            "player_facing_dir": "BG_EVENT_PLAYER_FACING_ANY",
+            "script": "LilycoveCity_LilycoveMuseum_2F_EventScript_21992B",
+            "type": "sign",
+            "x": 14,
+            "y": 10
+        },
+        {
+            "elevation": 0,
+            "player_facing_dir": "BG_EVENT_PLAYER_FACING_ANY",
+            "script": "LilycoveCity_LilycoveMuseum_2F_EventScript_21992B",
+            "type": "sign",
+            "x": 15,
+            "y": 10
+        },
+        {
+            "elevation": 0,
+            "player_facing_dir": "BG_EVENT_PLAYER_FACING_ANY",
+            "script": "LilycoveCity_LilycoveMuseum_2F_EventScript_21993E",
+            "type": "sign",
+            "x": 3,
+            "y": 6
+        },
+        {
+            "elevation": 0,
+            "player_facing_dir": "BG_EVENT_PLAYER_FACING_ANY",
+            "script": "LilycoveCity_LilycoveMuseum_2F_EventScript_21993E",
+            "type": "sign",
+            "x": 2,
+            "y": 6
+        },
+        {
+            "elevation": 0,
+            "player_facing_dir": "BG_EVENT_PLAYER_FACING_ANY",
+            "script": "LilycoveCity_LilycoveMuseum_2F_EventScript_219951",
+            "type": "sign",
+            "x": 10,
+            "y": 6
+        },
+        {
+            "elevation": 0,
+            "player_facing_dir": "BG_EVENT_PLAYER_FACING_ANY",
+            "script": "LilycoveCity_LilycoveMuseum_2F_EventScript_219951",
+            "type": "sign",
+            "x": 11,
+            "y": 6
+        },
+        {
+            "elevation": 0,
+            "player_facing_dir": "BG_EVENT_PLAYER_FACING_ANY",
+            "script": "LilycoveCity_LilycoveMuseum_2F_EventScript_219964",
+            "type": "sign",
+            "x": 19,
+            "y": 6
+        },
+        {
+            "elevation": 0,
+            "player_facing_dir": "BG_EVENT_PLAYER_FACING_ANY",
+            "script": "LilycoveCity_LilycoveMuseum_2F_EventScript_219964",
+            "type": "sign",
+            "x": 18,
+            "y": 6
+        },
+        {
+            "elevation": 0,
+            "player_facing_dir": "BG_EVENT_PLAYER_FACING_ANY",
+            "script": "LilycoveCity_LilycoveMuseum_2F_EventScript_219977",
+            "type": "sign",
+            "x": 6,
+            "y": 10
+        },
+        {
+            "elevation": 0,
+            "player_facing_dir": "BG_EVENT_PLAYER_FACING_ANY",
+            "script": "LilycoveCity_LilycoveMuseum_2F_EventScript_219977",
+            "type": "sign",
+            "x": 7,
+            "y": 10
+        },
+        {
+            "elevation": 0,
+            "player_facing_dir": "BG_EVENT_PLAYER_FACING_ANY",
+            "script": "LilycoveCity_LilycoveMuseum_2F_EventScript_218DDA",
+            "type": "sign",
+            "x": 11,
+            "y": 2
+        },
+        {
+            "elevation": 0,
+            "player_facing_dir": "BG_EVENT_PLAYER_FACING_ANY",
+            "script": "LilycoveCity_LilycoveMuseum_2F_EventScript_218DDA",
+            "type": "sign",
+            "x": 15,
+            "y": 2
+        }
+    ],
+    "connections": null,
+    "coord_events": [
+    ],
+    "id": "MAP_LILYCOVE_CITY_LILYCOVE_MUSEUM_2F",
+    "layout": "LAYOUT_LILYCOVE_CITY_LILYCOVE_MUSEUM_2F",
+    "map_type": "MAP_TYPE_INDOOR",
+    "music": "MUS_BIJYUTU",
+    "name": "LilycoveCity_LilycoveMuseum_2F",
+    "object_events": [
+        {
+            "elevation": 3,
+            "flag": "0",
+            "graphics_id": "EVENT_OBJ_GFX_GENTLEMAN",
+            "movement_range_x": 0,
+            "movement_range_y": 0,
+            "movement_type": "MOVEMENT_TYPE_FACE_UP",
+            "script": "LilycoveCity_LilycoveMuseum_2F_EventScript_219866",
+            "trainer_sight_or_berry_tree_id": "0",
+            "trainer_type": "0",
+            "x": 10,
+            "y": 8
+        },
+        {
+            "elevation": 3,
+            "flag": "FLAG_HIDE_LILYCOVE_MUSEUM_PATRON_2",
+            "graphics_id": "EVENT_OBJ_GFX_GIRL_2",
+            "movement_range_x": 1,
+            "movement_range_y": 1,
+            "movement_type": "MOVEMENT_TYPE_WANDER_AROUND",
+            "script": "LilycoveCity_LilycoveMuseum_2F_EventScript_21998A",
+            "trainer_sight_or_berry_tree_id": "0",
+            "trainer_type": "0",
+            "x": 19,
+            "y": 10
+        },
+        {
+            "elevation": 3,
+            "flag": "FLAG_HIDE_LILYCOVE_MUSEUM_TOURISTS",
+            "graphics_id": "EVENT_OBJ_GFX_EXPERT_M",
+            "movement_range_x": 1,
+            "movement_range_y": 1,
+            "movement_type": "MOVEMENT_TYPE_WANDER_AROUND",
+            "script": "LilycoveCity_LilycoveMuseum_2F_EventScript_219993",
+            "trainer_sight_or_berry_tree_id": "0",
+            "trainer_type": "0",
+            "x": 7,
+            "y": 3
+        },
+        {
+            "elevation": 3,
+            "flag": "FLAG_HIDE_LILYCOVE_MUSEUM_TOURISTS",
+            "graphics_id": "EVENT_OBJ_GFX_RICH_BOY",
+            "movement_range_x": 1,
+            "movement_range_y": 1,
+            "movement_type": "MOVEMENT_TYPE_WANDER_AROUND",
+            "script": "LilycoveCity_LilycoveMuseum_2F_EventScript_21999C",
+            "trainer_sight_or_berry_tree_id": "0",
+            "trainer_type": "0",
+            "x": 14,
+            "y": 6
+        }
+    ],
+    "region_map_section": "MAPSEC_LILYCOVE_CITY",
+    "requires_flash": false,
+    "show_map_name": false,
+    "warp_events": [
+        {
+            "dest_map": "MAP_LILYCOVE_CITY_LILYCOVE_MUSEUM_1F",
+            "dest_warp_id": 2,
+            "elevation": 0,
+            "x": 13,
+            "y": 1
+        }
+    ],
+    "weather": "WEATHER_NONE"
+}

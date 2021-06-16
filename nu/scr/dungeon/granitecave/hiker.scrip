@@ -1,0 +1,13 @@
+
+#import "dungeon/granitecave/hiker1.snip"
+#import "dungeon/granitecave/hiker2.snip"
+
+hiker:
+	lock
+	faceplayer
+	checkflag RECV_HM05
+	jumpif 1 hiker2
+	setorcopyvar 0x8000 HM05
+	setorcopyvar 0x8001 1
+	callstd 0
+	setflag RECV_HM05

@@ -1,0 +1,5 @@
+
+movmnt:
+	#byte 0x01 0x12 0x00
+
+#export movmnt

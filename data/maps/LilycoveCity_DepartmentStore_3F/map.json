@@ -1,0 +1,110 @@
+{
+    "allow_bike": false,
+    "allow_escape_rope": false,
+    "allow_running": true,
+    "battle_scene": "MAP_BATTLE_SCENE_NORMAL",
+    "bg_events": [
+    ],
+    "connections": null,
+    "coord_events": [
+    ],
+    "id": "MAP_LILYCOVE_CITY_DEPARTMENT_STORE_3F",
+    "layout": "LAYOUT_LILYCOVE_CITY_DEPARTMENT_STORE_3F",
+    "map_type": "MAP_TYPE_INDOOR",
+    "music": "MUS_FRIENDLY",
+    "name": "LilycoveCity_DepartmentStore_3F",
+    "object_events": [
+        {
+            "elevation": 3,
+            "flag": "0",
+            "graphics_id": "EVENT_OBJ_GFX_RUNNING_TRIATHLETE_M",
+            "movement_range_x": 1,
+            "movement_range_y": 1,
+            "movement_type": "MOVEMENT_TYPE_WANDER_AROUND",
+            "script": "LilycoveCity_DepartmentStore_3F_EventScript_21FCB6",
+            "trainer_sight_or_berry_tree_id": "0",
+            "trainer_type": "0",
+            "x": 0,
+            "y": 5
+        },
+        {
+            "elevation": 3,
+            "flag": "0",
+            "graphics_id": "EVENT_OBJ_GFX_POKEFAN_M",
+            "movement_range_x": 1,
+            "movement_range_y": 1,
+            "movement_type": "MOVEMENT_TYPE_WANDER_AROUND",
+            "script": "LilycoveCity_DepartmentStore_3F_EventScript_21FCBF",
+            "trainer_sight_or_berry_tree_id": "0",
+            "trainer_type": "0",
+            "x": 7,
+            "y": 7
+        },
+        {
+            "elevation": 3,
+            "flag": "0",
+            "graphics_id": "EVENT_OBJ_GFX_WOMAN_5",
+            "movement_range_x": 1,
+            "movement_range_y": 1,
+            "movement_type": "MOVEMENT_TYPE_WANDER_AROUND",
+            "script": "LilycoveCity_DepartmentStore_3F_EventScript_21FCC8",
+            "trainer_sight_or_berry_tree_id": "0",
+            "trainer_type": "0",
+            "x": 13,
+            "y": 5
+        },
+        {
+            "elevation": 3,
+            "flag": "0",
+            "graphics_id": "EVENT_OBJ_GFX_WOMAN_3",
+            "movement_range_x": 0,
+            "movement_range_y": 0,
+            "movement_type": "MOVEMENT_TYPE_FACE_DOWN",
+            "script": "LilycoveCity_DepartmentStore_3F_EventScript_21FC65",
+            "trainer_sight_or_berry_tree_id": "0",
+            "trainer_type": "0",
+            "x": 8,
+            "y": 2
+        },
+        {
+            "elevation": 3,
+            "flag": "0",
+            "graphics_id": "EVENT_OBJ_GFX_WOMAN_3",
+            "movement_range_x": 1,
+            "movement_range_y": 1,
+            "movement_type": "MOVEMENT_TYPE_FACE_DOWN",
+            "script": "LilycoveCity_DepartmentStore_3F_EventScript_21FC8C",
+            "trainer_sight_or_berry_tree_id": "0",
+            "trainer_type": "0",
+            "x": 10,
+            "y": 2
+        }
+    ],
+    "region_map_section": "MAPSEC_LILYCOVE_CITY",
+    "requires_flash": false,
+    "show_map_name": false,
+    "warp_events": [
+        {
+            "dest_map": "MAP_LILYCOVE_CITY_DEPARTMENT_STORE_2F",
+            "dest_warp_id": 1,
+            "elevation": 0,
+            "x": 13,
+            "y": 1
+        },
+        {
+            "dest_map": "MAP_LILYCOVE_CITY_DEPARTMENT_STORE_4F",
+            "dest_warp_id": 0,
+            "elevation": 0,
+            "x": 16,
+            "y": 1
+        },
+        {
+            "dest_map": "MAP_LILYCOVE_CITY_DEPARTMENT_STORE_ELEVATOR",
+            "dest_warp_id": 0,
+            "elevation": 0,
+            "x": 2,
+            "y": 1
+        }
+    ],
+    "weather": "WEATHER_NONE"
+}

@@ -1,0 +1,138 @@
+{
+    "allow_bike": false,
+    "allow_escape_rope": false,
+    "allow_running": true,
+    "battle_scene": "MAP_BATTLE_SCENE_NORMAL",
+    "bg_events": [
+        {
+            "elevation": 0,
+            "player_facing_dir": "BG_EVENT_PLAYER_FACING_NORTH",
+            "script": "LilycoveCity_DepartmentStore_1F_EventScript_21F85D",
+            "type": "sign",
+            "x": 0,
+            "y": 8
+        }
+    ],
+    "connections": null,
+    "coord_events": [
+    ],
+    "id": "MAP_LILYCOVE_CITY_DEPARTMENT_STORE_1F",
+    "layout": "LAYOUT_LILYCOVE_CITY_DEPARTMENT_STORE_1F",
+    "map_type": "MAP_TYPE_INDOOR",
+    "music": "MUS_MINAMO",
+    "name": "LilycoveCity_DepartmentStore_1F",
+    "object_events": [
+        {
+            "elevation": 3,
+            "flag": "0",
+            "graphics_id": "EVENT_OBJ_GFX_BEAUTY",
+            "movement_range_x": 0,
+            "movement_range_y": 0,
+            "movement_type": "MOVEMENT_TYPE_FACE_DOWN",
+            "script": "LilycoveCity_DepartmentStore_1F_EventScript_21F693",
+            "trainer_sight_or_berry_tree_id": "0",
+            "trainer_type": "0",
+            "x": 8,
+            "y": 2
+        },
+        {
+            "elevation": 3,
+            "flag": "0",
+            "graphics_id": "EVENT_OBJ_GFX_BEAUTY",
+            "movement_range_x": 0,
+            "movement_range_y": 0,
+            "movement_type": "MOVEMENT_TYPE_FACE_DOWN",
+            "script": "LilycoveCity_DepartmentStore_1F_EventScript_21F69C",
+            "trainer_sight_or_berry_tree_id": "0",
+            "trainer_type": "0",
+            "x": 10,
+            "y": 2
+        },
+        {
+            "elevation": 3,
+            "flag": "0",
+            "graphics_id": "EVENT_OBJ_GFX_POKEFAN_F",
+            "movement_range_x": 1,
+            "movement_range_y": 1,
+            "movement_type": "MOVEMENT_TYPE_WANDER_AROUND",
+            "script": "LilycoveCity_DepartmentStore_1F_EventScript_21F82F",
+            "trainer_sight_or_berry_tree_id": "0",
+            "trainer_type": "0",
+            "x": 14,
+            "y": 5
+        },
+        {
+            "elevation": 3,
+            "flag": "0",
+            "graphics_id": "EVENT_OBJ_GFX_LITTLE_GIRL",
+            "movement_range_x": 1,
+            "movement_range_y": 1,
+            "movement_type": "MOVEMENT_TYPE_WANDER_AROUND",
+            "script": "LilycoveCity_DepartmentStore_1F_EventScript_21F838",
+            "trainer_sight_or_berry_tree_id": "0",
+            "trainer_type": "0",
+            "x": 4,
+            "y": 4
+        },
+        {
+            "elevation": 3,
+            "flag": "0",
+            "graphics_id": "EVENT_OBJ_GFX_POKEFAN_M",
+            "movement_range_x": 1,
+            "movement_range_y": 1,
+            "movement_type": "MOVEMENT_TYPE_LOOK_AROUND",
+            "script": "LilycoveCity_DepartmentStore_1F_EventScript_21F841",
+            "trainer_sight_or_berry_tree_id": "0",
+            "trainer_type": "0",
+            "x": 3,
+            "y": 6
+        },
+        {
+            "elevation": 3,
+            "flag": "0",
+            "graphics_id": "EVENT_OBJ_GFX_AZUMARILL",
+            "movement_range_x": 1,
+            "movement_range_y": 1,
+            "movement_type": "MOVEMENT_TYPE_LOOK_AROUND",
+            "script": "LilycoveCity_DepartmentStore_1F_EventScript_21F84A",
+            "trainer_sight_or_berry_tree_id": "0",
+            "trainer_type": "0",
+            "x": 2,
+            "y": 6
+        }
+    ],
+    "region_map_section": "MAPSEC_LILYCOVE_CITY",
+    "requires_flash": false,
+    "show_map_name": false,
+    "warp_events": [
+        {
+            "dest_map": "MAP_LILYCOVE_CITY",
+            "dest_warp_id": 0,
+            "elevation": 0,
+            "x": 8,
+            "y": 7
+        },
+        {
+            "dest_map": "MAP_LILYCOVE_CITY",
+            "dest_warp_id": 0,
+            "elevation": 0,
+            "x": 9,
+            "y": 7
+        },
+        {
+            "dest_map": "MAP_LILYCOVE_CITY_DEPARTMENT_STORE_2F",
+            "dest_warp_id": 0,
+            "elevation": 0,
+            "x": 16,
+            "y": 1
+        },
+        {
+            "dest_map": "MAP_LILYCOVE_CITY_DEPARTMENT_STORE_ELEVATOR",
+            "dest_warp_id": 0,
+            "elevation": 0,
+            "x": 2,
+            "y": 1
+        }
+    ],
+    "weather": "WEATHER_NONE"
+}

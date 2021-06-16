@@ -1,0 +1,64 @@
+{
+    "allow_bike": false,
+    "allow_escape_rope": false,
+    "allow_running": true,
+    "battle_scene": "MAP_BATTLE_SCENE_NORMAL",
+    "bg_events": [
+    ],
+    "connections": null,
+    "coord_events": [
+    ],
+    "id": "MAP_ROUTE104_MR_BRINEYS_HOUSE",
+    "layout": "LAYOUT_ROUTE104_MR_BRINEYS_HOUSE",
+    "map_type": "MAP_TYPE_INDOOR",
+    "music": "MUS_MACHI_S2",
+    "name": "Route104_MrBrineysHouse",
+    "object_events": [
+        {
+            "elevation": 3,
+            "flag": "FLAG_HIDE_BRINEYS_HOUSE_MR_BRINEY",
+            "graphics_id": "EVENT_OBJ_GFX_EXPERT_M",
+            "movement_range_x": 3,
+            "movement_range_y": 3,
+            "movement_type": "MOVEMENT_TYPE_WALK_SEQUENCE_DOWN_LEFT_UP_RIGHT",
+            "script": "Route104_MrBrineysHouse_EventScript_229D67",
+            "trainer_sight_or_berry_tree_id": "0",
+            "trainer_type": "0",
+            "x": 5,
+            "y": 3
+        },
+        {
+            "elevation": 3,
+            "flag": "FLAG_HIDE_BRINEYS_HOUSE_PEEKO",
+            "graphics_id": "EVENT_OBJ_GFX_WINGULL",
+            "movement_range_x": 3,
+            "movement_range_y": 3,
+            "movement_type": "MOVEMENT_TYPE_FACE_DOWN",
+            "script": "Route104_MrBrineysHouse_EventScript_229E5D",
+            "trainer_sight_or_berry_tree_id": "0",
+            "trainer_type": "0",
+            "x": 6,
+            "y": 3
+        }
+    ],
+    "region_map_section": "MAPSEC_ROUTE_104",
+    "requires_flash": false,
+    "show_map_name": false,
+    "warp_events": [
+        {
+            "dest_map": "MAP_ROUTE104",
+            "dest_warp_id": 0,
+            "elevation": 0,
+            "x": 5,
+            "y": 8
+        },
+        {
+            "dest_map": "MAP_ROUTE104",
+            "dest_warp_id": 0,
+            "elevation": 0,
+            "x": 6,
+            "y": 8
+        }
+    ],
+    "weather": "WEATHER_NONE"
+}

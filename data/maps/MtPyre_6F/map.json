@@ -1,0 +1,77 @@
+{
+    "allow_bike": false,
+    "allow_escape_rope": false,
+    "allow_running": true,
+    "battle_scene": "MAP_BATTLE_SCENE_NORMAL",
+    "bg_events": [
+    ],
+    "connections": null,
+    "coord_events": [
+    ],
+    "id": "MAP_MT_PYRE_6F",
+    "layout": "LAYOUT_MT_PYRE_6F",
+    "map_type": "MAP_TYPE_INDOOR",
+    "music": "MUS_M_DUNGON",
+    "name": "MtPyre_6F",
+    "object_events": [
+        {
+            "elevation": 3,
+            "flag": "0",
+            "graphics_id": "EVENT_OBJ_GFX_HEX_MANIAC",
+            "movement_range_x": 1,
+            "movement_range_y": 1,
+            "movement_type": "MOVEMENT_TYPE_ROTATE_COUNTERCLOCKWISE",
+            "script": "MtPyre_6F_EventScript_231D3B",
+            "trainer_sight_or_berry_tree_id": "3",
+            "trainer_type": "1",
+            "x": 6,
+            "y": 3
+        },
+        {
+            "elevation": 3,
+            "flag": "FLAG_ITEM_MT_PYRE_6F_TM_30",
+            "graphics_id": "EVENT_OBJ_GFX_ITEM_BALL",
+            "movement_range_x": 1,
+            "movement_range_y": 1,
+            "movement_type": "MOVEMENT_TYPE_LOOK_AROUND",
+            "script": "MtPyre_6F_EventScript_ItemTM30",
+            "trainer_sight_or_berry_tree_id": "0",
+            "trainer_type": "0",
+            "x": 6,
+            "y": 9
+        },
+        {
+            "elevation": 3,
+            "flag": "0",
+            "graphics_id": "EVENT_OBJ_GFX_PSYCHIC_M",
+            "movement_range_x": 1,
+            "movement_range_y": 1,
+            "movement_type": "MOVEMENT_TYPE_ROTATE_CLOCKWISE",
+            "script": "MtPyre_6F_EventScript_231D9D",
+            "trainer_sight_or_berry_tree_id": "3",
+            "trainer_type": "1",
+            "x": 10,
+            "y": 3
+        }
+    ],
+    "region_map_section": "MAPSEC_MT_PYRE",
+    "requires_flash": false,
+    "show_map_name": true,
+    "warp_events": [
+        {
+            "dest_map": "MAP_MT_PYRE_5F",
+            "dest_warp_id": 0,
+            "elevation": 3,
+            "x": 2,
+            "y": 1
+        },
+        {
+            "dest_map": "MAP_MT_PYRE_5F",
+            "dest_warp_id": 2,
+            "elevation": 3,
+            "x": 1,
+            "y": 10
+        }
+    ],
+    "weather": "WEATHER_NONE"
+}

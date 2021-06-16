@@ -1,0 +1,54 @@
+/* -*- coding: utf-8 -*- */
+
+#define LASTRESULT 0x800D
+#if 0 == 1
+#warn "this warnin\g should not emit"
+#elif 0 == 2
+#fatal "this \" s\\hould definitely not emit"
+#elifndef LASTRESULT
+#warn "defines don’t work if this emitted!"
+#else /* 0 != 1 */
+#info "this info should emit"
+#define PLAYERFACING 0x800E
+#define UP 1
+#endif /* 0 == 1 */
+
+#define YES 1
+#define NO 0
+#define GIRL 1
+#define BOY 0
+
+label1:
+	additem LASTRESULT 5
+	die
+	end
+	checkgender
+	cmpvar2val LASTRESULT GIRL
+	jumpif 0x1 label2
+dowildbattle /* indentation is insignificant */
+	checkcoins 5000
+	#define HEH 386
+	cmpvar2val LASTRESULT 1
+	callif YES label3
+
+label2:
+	checkcoins 3000
+	cmpvar2val LASTRESULT 1
+	callif 1 label3
+	end
+
+label3:
+	playsong HEH
+	cmpvar2val PLAYERFACING UP
+	callif 1 domove
+	return
+
+#import "test2.scrip"
+domove:
+#define PLAYER 0xFF
+	domovmnt PLAYER test2:movmnt
+	#byte 0xFF
+	#hword 0x4000
+	return
+
+#export label1

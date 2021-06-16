@@ -1,0 +1,54 @@
+*.exe
+*.o
+*.i
+*.elf
+*.gba
+*.agb
+*.[ibu]ps
+*.delta
+*.xdelta
+*.sgm
+*.sa[1-9]
+*.sg[1-9]
+*.1bpp
+*.4bpp
+*.8bpp
+*.gbapal
+*.lz
+*.rl
+*.latfont
+*.hwjpnfont
+*.fwjpnfont
+sound/**/*.bin
+sound/songs/midi/*.s
+tools/agbcc
+*.map
+*.ld
+*.bat
+*.dump
+*.sa*
+Thumbs.db
+build/
+.DS_Store
+*.ddump
+.idea/
+porymap.project.cfg
+.vscode/
+/*.png
+/*.gif
+/*.mkv
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Valgrind
+vgcore*
+
+# Script binaries
+/util/bin2asm
+/util/scrip2o
+
+# ignore JSON-based wild encounters
+/src/data/wild_encounters.json

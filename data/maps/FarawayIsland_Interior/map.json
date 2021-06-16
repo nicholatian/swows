@@ -1,0 +1,51 @@
+{
+    "allow_bike": true,
+    "allow_escape_rope": false,
+    "allow_running": true,
+    "battle_scene": "MAP_BATTLE_SCENE_NORMAL",
+    "bg_events": [
+    ],
+    "connections": null,
+    "coord_events": [
+    ],
+    "id": "MAP_FARAWAY_ISLAND_INTERIOR",
+    "layout": "LAYOUT_FARAWAY_ISLAND_INTERIOR",
+    "map_type": "MAP_TYPE_INDOOR",
+    "music": "MUS_DAN02",
+    "name": "FarawayIsland_Interior",
+    "object_events": [
+        {
+            "elevation": 3,
+            "flag": "FLAG_HIDE_MEW",
+            "graphics_id": "EVENT_OBJ_GFX_MEW",
+            "movement_range_x": 15,
+            "movement_range_y": 15,
+            "movement_type": "MOVEMENT_TYPE_COPY_PLAYER_OPPOSITE_IN_GRASS",
+            "script": "FarawayIsland_Interior_EventScript_267DF2",
+            "trainer_sight_or_berry_tree_id": "1",
+            "trainer_type": "0",
+            "x": 13,
+            "y": 17
+        }
+    ],
+    "region_map_section": "MAPSEC_FARAWAY_ISLAND",
+    "requires_flash": false,
+    "show_map_name": true,
+    "warp_events": [
+        {
+            "dest_map": "MAP_FARAWAY_ISLAND_ENTRANCE",
+            "dest_warp_id": 0,
+            "elevation": 0,
+            "x": 12,
+            "y": 19
+        },
+        {
+            "dest_map": "MAP_FARAWAY_ISLAND_ENTRANCE",
+            "dest_warp_id": 1,
+            "elevation": 0,
+            "x": 13,
+            "y": 19
+        }
+    ],
+    "weather": "WEATHER_SHADE"
+}

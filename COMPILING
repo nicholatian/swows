@@ -1,0 +1,32 @@
+*****
+
+BUILDING SWOWS
+
+*****
+
+PREINSTALL
+----------
+
+LINUX.
+
+GCC et al, and dkp-pacman (unless on Arch, where regular pacman works).
+
+MACOS.
+
+‘brew install coreutils’ for GNU echo, needed for ANSI colour printing.
+
+‘xcode-select --install’ for the compiler toolchain, used for building the
+tools. install devkitARM and target tools with `dkp-pacman -S devkitARM grit gbalzss gbafix`; devkitPro pacman can be downloaded & installed from
+<https://devkitpro.org/>.
+
+WINDOWS.
+
+Not supported, although if someone is interested, I am open to the use of WSL2.
+I won’t be adding that myself anytime soon.
+
+BUILD PROCESS
+-------------
+
+$ make
+
+should output ‘swows.gba’ in the repository root. ‘make -j’ is supported.

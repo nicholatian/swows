@@ -1,0 +1,51 @@
+{
+    "allow_bike": false,
+    "allow_escape_rope": false,
+    "allow_running": true,
+    "battle_scene": "MAP_BATTLE_SCENE_NORMAL",
+    "bg_events": [
+    ],
+    "connections": null,
+    "coord_events": [
+    ],
+    "id": "MAP_ROUTE117_POKEMON_DAY_CARE",
+    "layout": "LAYOUT_ROUTE117_POKEMON_DAY_CARE",
+    "map_type": "MAP_TYPE_INDOOR",
+    "music": "MUS_GOTOWN",
+    "name": "Route117_PokemonDayCare",
+    "object_events": [
+        {
+            "elevation": 3,
+            "flag": "0",
+            "graphics_id": "EVENT_OBJ_GFX_OLD_WOMAN",
+            "movement_range_x": 0,
+            "movement_range_y": 0,
+            "movement_type": "MOVEMENT_TYPE_FACE_DOWN",
+            "script": "Route117_PokemonDayCare_EventScript_291D11",
+            "trainer_sight_or_berry_tree_id": "0",
+            "trainer_type": "0",
+            "x": 2,
+            "y": 2
+        }
+    ],
+    "region_map_section": "MAPSEC_ROUTE_117",
+    "requires_flash": false,
+    "show_map_name": false,
+    "warp_events": [
+        {
+            "dest_map": "MAP_ROUTE117",
+            "dest_warp_id": 0,
+            "elevation": 0,
+            "x": 2,
+            "y": 8
+        },
+        {
+            "dest_map": "MAP_ROUTE117",
+            "dest_warp_id": 0,
+            "elevation": 0,
+            "x": 3,
+            "y": 8
+        }
+    ],
+    "weather": "WEATHER_NONE"
+}
