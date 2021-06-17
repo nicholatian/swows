@@ -1,7 +1,7 @@
 /****************************************************************************\
- *                                  SwowS™                                  *
+ *                              POKeMON SwowS!                              *
  *                                                                          *
- *                    Copyright © 2021 Alexander Nicholi                    *
+ *                   Copyright (C) 2021 Alexander Nicholi                   *
  *                       Released under BSD-0-Clause.                       *
 \****************************************************************************/
 
