@@ -1,7 +1,7 @@
 ##############################################################################
-##                                  SwowS™                                  ##
+##                              POKeMON SwowS!                              ##
 ##                                                                          ##
-##                    Copyright © 2021 Alexander Nicholi                    ##
+##                   Copyright (C) 2021 Alexander Nicholi                   ##
 ##                       Released under BSD-0-Clause.                       ##
 ##############################################################################
 
@@ -16,7 +16,7 @@ include $(AQ)/lib/slick/base.mk
 # name of project. used in output binary naming
 PROJECT := swows
 
-# put a ‘1’ for the desired target types to compile
+# put a '1' for the desired target types to compile
 EXEFILE := 1
 SOFILE  :=
 AFILE   :=
@@ -31,7 +31,7 @@ INCLUDEL := src
 LIBS    :=
 LIBDIRS :=
 
-# ‘3P’ are in-tree 3rd-party dependencies
+# '3P' are in-tree 3rd-party dependencies
 # 3PLIBDIR is the base directory
 # 3PLIBS is the folder names in the base directory for each library
 3PLIBDIR :=

@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-##                                  SwowS™                                  ##
+##                              POKeMON SwowS!                              ##
 ##                                                                          ##
-##                    Copyright © 2021 Alexander Nicholi                    ##
+##                   Copyright (C) 2021 Alexander Nicholi                   ##
 ##                       Released under BSD-0-Clause.                       ##
 ##############################################################################
 
 # TBW
+
+0x31DE0 = word: names_m
+0x31E10 = word: names_f

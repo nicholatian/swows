@@ -1,12 +1,12 @@
 #!/usr/bin/make
 # -*- coding: utf-8 -*-
-## Copyright © 2020-2021 Aquefir.
+## Copyright (C) 2020-2021 Aquefir.
 ## Released under BSD-2-Clause.
 ## This Makefile provides the bodies of a variety of build targets (or
-## ‘recipes’) normally used in building native executables and libraries.
+## 'recipes') normally used in building native executables and libraries.
 ## These include: debug, release, sanity check, code coverage, and address
 ## sanitisation tunings. Using the conventional *FILES and *FLAGS Makefile
-## variables, the toolchain program variables (like ‘$(CC)’), the $(PROJECT)
+## variables, the toolchain program variables (like '$(CC)'), the $(PROJECT)
 ## variable, and some miscellaneous helpers, it will fill out all of the
 ## typical details for these targets automatically, just by including it in
 ## the main Makefile.

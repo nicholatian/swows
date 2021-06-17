@@ -1,6 +1,6 @@
 #!/usr/bin/make
 # -*- coding: utf-8 -*-
-## Copyright © 2020-2021 Aquefir.
+## Copyright (C) 2020-2021 Aquefir.
 ## Released under BSD-2-Clause.
 ## This Makefile provides multi-platform build normalisation for the C and C++
 ## compilation toolchains. It is included at the top of the main Makefile.
@@ -8,7 +8,7 @@
 ##
 
 # Check Make version; we need at least GNU Make 3.82. Fortunately,
-# ‘undefine’ directive has been introduced exactly in GNU Make 3.82.
+# 'undefine' directive has been introduced exactly in GNU Make 3.82.
 ifeq ($(filter undefine,$(value .FEATURES)),)
 $(error Unsupported Make version. \
 The build system does not work properly with GNU Make $(MAKE_VERSION). \
@@ -24,7 +24,7 @@ endif
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin SLICK_PRINT),undefined)
 .O_SLICK_PRINT := DEFAULT
 else ifeq ($(origin SLICK_PRINT),default)
@@ -54,7 +54,7 @@ override SLICK_PRINT := $(SLICK_PRINT.O_$(.O_SLICK_PRINT))
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin SLICK_OVERRIDE),undefined)
 .O_SLICK_OVERRIDE := DEFAULT
 else ifeq ($(origin SLICK_OVERRIDE),default)
@@ -73,7 +73,7 @@ override SLICK_OVERRIDE := $(SLICK_OVERRIDE.O_$(.O_SLICK_OVERRIDE))
 
 ## Host platform.
 
-# The “.K_” prefix denotes “[k]onstant” and is to prevent naming collisions.
+# The ".K_" prefix denotes "[k]onstant" and is to prevent naming collisions.
 # Capitalise the result text for use in variable interpolation later.
 .K_UNAME := $(shell uname -s | tr 'a-z' 'A-Z')
 
@@ -81,7 +81,7 @@ override SLICK_OVERRIDE := $(SLICK_OVERRIDE.O_$(.O_SLICK_OVERRIDE))
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin TP),undefined)
 .O_TP := DEFAULT
 else ifeq ($(origin TP),default)
@@ -102,7 +102,7 @@ override TP := $(TP.O_$(.O_TP))
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin TC),undefined)
 .O_TC := DEFAULT
 else ifeq ($(origin TC),default)
@@ -132,7 +132,7 @@ override TC := $(TC.O_$(.O_TC))
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin TROOT),undefined)
 .O_TROOT := DEFAULT
 else ifeq ($(origin TROOT),default)
@@ -572,7 +572,7 @@ SYNDEFS.APE    := APE AMD64 LILENDIAN WORDSZ_64 HAVE_I32 HAVE_I64 HAVE_FP \
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin SO),undefined)
 .O_SO := DEFAULT
 else ifeq ($(origin SO),default)
@@ -593,7 +593,7 @@ override SO := $(SO.O_$(.O_SO))
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin EXE),undefined)
 .O_EXE := DEFAULT
 else ifeq ($(origin EXE),default)
@@ -614,7 +614,7 @@ override EXE := $(EXE.O_$(.O_EXE))
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin BIN),undefined)
 .O_BIN := DEFAULT
 else ifeq ($(origin BIN),default)
@@ -635,7 +635,7 @@ override BIN := $(BIN.O_$(.O_BIN))
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin AS),undefined)
 .O_AS := DEFAULT
 else ifeq ($(origin AS),default)
@@ -656,7 +656,7 @@ override AS := $(AS.O_$(.O_AS))
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin CC),undefined)
 .O_CC := DEFAULT
 else ifeq ($(origin CC),default)
@@ -677,7 +677,7 @@ override CC := $(CC.O_$(.O_CC))
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin CXX),undefined)
 .O_CXX := DEFAULT
 else ifeq ($(origin CXX),default)
@@ -698,7 +698,7 @@ override CXX := $(CXX.O_$(.O_CXX))
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin AR),undefined)
 .O_AR := DEFAULT
 else ifeq ($(origin AR),default)
@@ -719,7 +719,7 @@ override AR := $(AR.O_$(.O_AR))
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin OCPY),undefined)
 .O_OCPY := DEFAULT
 else ifeq ($(origin OCPY),default)
@@ -740,7 +740,7 @@ override OCPY := $(OCPY.O_$(.O_OCPY))
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin STRIP),undefined)
 .O_STRIP := DEFAULT
 else ifeq ($(origin STRIP),default)
@@ -761,7 +761,7 @@ override STRIP := $(STRIP.O_$(.O_STRIP))
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin PROF),undefined)
 .O_PROF := DEFAULT
 else ifeq ($(origin PROF),default)
@@ -782,7 +782,7 @@ override PROF := $(PROF.O_$(.O_PROF))
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin COV),undefined)
 .O_COV := DEFAULT
 else ifeq ($(origin COV),default)
@@ -803,7 +803,7 @@ override COV := $(COV.O_$(.O_COV))
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin PL),undefined)
 .O_PL := DEFAULT
 else ifeq ($(origin PL),default)
@@ -824,7 +824,7 @@ override PL := $(PL.O_$(.O_PL))
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin PY),undefined)
 .O_PY := DEFAULT
 else ifeq ($(origin PY),default)
@@ -845,7 +845,7 @@ override PY := $(PY.O_$(.O_PY))
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin FMT),undefined)
 .O_FMT := DEFAULT
 else ifeq ($(origin FMT),default)
@@ -866,7 +866,7 @@ override FMT := $(FMT.O_$(.O_FMT))
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin LINT),undefined)
 .O_LINT := DEFAULT
 else ifeq ($(origin LINT),default)
@@ -887,7 +887,7 @@ override LINT := $(LINT.O_$(.O_LINT))
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin INSTALL),undefined)
 .O_INSTALL := DEFAULT
 else ifeq ($(origin INSTALL),default)
@@ -908,7 +908,7 @@ override INSTALL := $(INSTALL.O_$(.O_INSTALL))
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin ECHO),undefined)
 .O_ECHO := DEFAULT
 else ifeq ($(origin ECHO),default)
@@ -925,11 +925,11 @@ ECHO.O_CUSTOM := $(ECHO)
 # Finally, set the variable.
 override ECHO := $(ECHO.O_$(.O_ECHO))
 
-# Copy command (‘cp’).
+# Copy command ('cp').
 
 # Inspect the origin of the new variable.
 # If it is undefined or set by default, say so. Otherwise it was customised.
-# The “.O_” prefix denotes “origin” and is to prevent naming collisions.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
 ifeq ($(origin CP),undefined)
 .O_CP := DEFAULT
 else ifeq ($(origin CP),default)

@@ -1,19 +1,19 @@
-This file contains the project’s copypastable boilerplate comment headers.
+This file contains the project's copypastable boilerplate comment headers.
 
 Boilerplate for C-like languages:
 
 /****************************************************************************\
- *                                  SwowS™                                  *
+ *                              POKeMON SwowS!                              *
  *                                                                          *
- *                    Copyright © 2021 Alexander Nicholi                    *
+ *                   Copyright (C) 2021 Alexander Nicholi                   *
  *                       Released under BSD-0-Clause.                       *
 \****************************************************************************/
 
 Hash-based boilerplate (Python, POSIX shell, Makefile):
 
 ##############################################################################
-##                                  SwowS™                                  ##
+##                              POKeMON SwowS!                              ##
 ##                                                                          ##
-##                    Copyright © 2021 Alexander Nicholi                    ##
+##                   Copyright (C) 2021 Alexander Nicholi                   ##
 ##                       Released under BSD-0-Clause.                       ##
 ##############################################################################
