@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-##                                  SwowS™                                  ##
+##                              POKeMON SwowS!                              ##
 ##                                                                          ##
-##                    Copyright © 2021 Alexander Nicholi                    ##
+##                   Copyright (C) 2021 Alexander Nicholi                   ##
 ##                       Released under BSD-0-Clause.                       ##
 ##############################################################################
 
@@ -29,6 +29,12 @@
 
 
 
+## Sourcepatching specific
+
+etc/emer.ld
+
+
+
 ## Python
 __pycache__
 
@@ -46,6 +52,7 @@ __pycache__
 
 /.vscode/*
 !/.vscode/c_cpp_properties.json
+!/.vscode/settings.json
 
 
 
