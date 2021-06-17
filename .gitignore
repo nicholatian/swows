@@ -26,6 +26,8 @@
 *.agb
 *.elf
 *.bin
+*.tar*
+*.pyc
 
 
 
