@@ -8,6 +8,9 @@
 ##############################################################################
 
 import sdl2.ext
+import sdl2
+
+WIN_DIMENSIONS = (960, 416)
 
 HELP_TEXT = '''
 SABLMAP map editor
@@ -32,29 +35,70 @@ def print2(x):
 	from sys import stderr
 	print(x, file=stderr)
 
+class BlockSprite:
+	def __init__(self, fac):
+		self.data = fac.create_software_sprite((16, 16))
+		self.view = sdl2.ext.PixelView(self.data)
+
+class Renderer(sdl2.ext.SoftwareSpriteRenderSystem):
+	def __init__(self, window):
+		super(Renderer, self).__init__(window)
+
+	def render(self, sprite, x, y):
+		super(Renderer, self).render(sprite, x, y)
+
 class State:
-	def __init__(self, blocks, moves, width, length, silent, window):
+	def __init__(self, blocks, moves, width, length, silent):
 		self.blocks = blocks
 		self.moves = moves
 		self.mapwidth = width
 		self.maplength = length
 		self.silent = silent
-		self.window = window
+		self.mapview_chg = True
+		self.blockset_chg = True
+		self.win = sdl2.ext.Window('SABLMAP', WIN_DIMENSIONS)
+		self.ren = Renderer(self.win)
+		self.fac = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE)
+		self.fbuf = self.fac.create_software_sprite(WIN_DIMENSIONS)
+		self.fview = sdl2.ext.PixelView(self.fbuf)
+		self.mapblocks = []
+		self.blockset = []
+
+	def render(self):
+		# update the frame buffer with the coherent data
+		if self.mapview_chg:
+			#self.render_mapview()
+			self.mapview_chg = False
+		if self.blockset_chg:
+			#self.render_blockset()
+			self.blockset_chg = False
+
+	def render_mapview(self):
+		for i in range(25):
+			for j in range(40):
+				self.ren.render(self.mapblocks[i][j].data, i, j)
+
+	def render_blockset(self):
+		for i in range(25):
+			for j in range(16):
+				self.ren.render(self.blockset[i][j].data, i, j)
 
 def mainloop(state: State):
-	state.window.show()
+	state.win.show()
 	events = sdl2.ext.get_events()
 	for event in events:
 		if event.type == sdl2.SDL_QUIT:
 			return True
-	state.window.refresh()
+	state.render()
+	sdl2.SDL_Delay(10)
 	return False
 
 def gfxmain(blocks, moves, d, silent):
-	w = sdl2.ext.Window('SABLMAP', (960, 416))
-	state: State = State(blocks, moves, d[0], d[1], silent, w)
+	sdl2.ext.init()
+	state: State = State(blocks, moves, d[0], d[1], silent)
 	while mainloop(state) == False:
 		pass
+	sdl2.ext.quit()
 	return 0
 
 def main(args):
