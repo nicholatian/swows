@@ -29,6 +29,11 @@
 
 
 
+## Python
+__pycache__
+
+
+
 ## IDA Pro
 
 *.id*

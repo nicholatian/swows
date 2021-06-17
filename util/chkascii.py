@@ -30,26 +30,30 @@ The program returns exit code 0 when verification passes, and 1 when
 it fails. Printing help text returns 127.
 '''
 
+def bad_ascii(block, sz, allow_nul):
+	i = 0
+	sz = len(block)
+	lower = 0 if allow_nul else 1
+	while i < sz:
+		octet = int(block[i])
+		if octet < lower or octet > 127:
+			return i
+		i += 1
+	return i
+
 def is_invalid(filename, allow_nul, silent):
 	f = open(filename, 'rb')
-	# Read and check bytes in blocks of 4KiB
-	lower = 0 if allow_nul else 1
 	fail = False
+	# Read and check bytes in blocks of 4KiB
+	blocksz = 4096
 	super_i = 0
-	for block in iter(lambda: f.read(4096), b''):
-		i = 0
-		sz = len(block)
-		while i < sz:
-			octet = int(block[i])
-			if octet < lower or octet > 127:
-				fail = True
-				break
-			i += 1
-			super_i += 1
-		if fail:
+	for block in iter(lambda: f.read(blocksz), b''):
+		r = bad_ascii(block, blocksz, allow_nul)
+		super_i += blocksz
+		if r < blocksz:
 			if not silent:
 				print2('Invalid octet at offset $%X: 0x%02X is not valid ASCII' %
-				(super_i, octet))
+				(super_i, block[r]))
 			break
 	return fail
 

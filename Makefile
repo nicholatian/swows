@@ -47,6 +47,12 @@ CPPFILES  :=
 PUBHFILES :=
 PRVHFILES :=
 
+# assets
+ACTFILES  :=
+SNIPFILES := \
+	data/blendan.snip \
+	data/maylene.snip
+
 # test suite sources
 TES_CFILES    :=
 TES_CPPFILES  :=
