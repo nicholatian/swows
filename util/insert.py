@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 ##############################################################################
-##                                  SwowS™                                  ##
+##                              POKeMON SwowS!                              ##
 ##                                                                          ##
-##                    Copyright © 2021 Alexander Nicholi                    ##
+##                   Copyright (C) 2021 Alexander Nicholi                   ##
 ##                       Released under BSD-0-Clause.                       ##
 ##############################################################################
 
-from os import stat, linesep
+from os import linesep
 from sys import argv, exit, stderr
-from struct import pack, pack_into, unpack, unpack_from
+from struct import pack, unpack_from
 from shutil import copyfile
 
 
@@ -56,7 +56,7 @@ def getHooks(hooksfile, objfile):
 				# only whitespace is permitted outside comments and pairs
 				if char != ' ' and char != '\t':
 					raise Exception('Malformed syntax on line ' + str(lnum + 1))
-			# don’t try to parse this, there’s nothing here
+			# don't try to parse this, there's nothing here
 			continue
 		pair = newline.split('=', 1)
 		# Remove surrounding whitespace
@@ -143,18 +143,21 @@ def getHooks(hooksfile, objfile):
 				else:
 					i += 1
 			count = len(parts)
-			# ensure it’s within normal bounds
+			# ensure it's within normal bounds
 			if count < 2 or count > 3:
-				raise Exception('Strange number of items on line ' + str(lnum + 1) + ' of arm-none-eabi-nm’s output: `' + str(parts) + '`')
+				raise Exception('Strange number of items on line ' +
+					str(lnum + 1) + ' of arm-none-eabi-nm\u2019s output: \u201C' +
+					str(parts) + '\u201D')
 			# finally, check for a match
 			if parts[0] == name:
 				foundparts += [parts]
 		if len(foundparts) == 0:
-			# didn’t find any matches
-			raise Exception('Symbol “' + name + '” defined in hooks list, but not found in output object code')
+			# didn't find any matches
+			raise Exception('Symbol \u201C' + name + '\u201D defined in hooks ' +
+				'list, but not found in output object code')
 		addrs = []
 		# go through what we found
-		# ignore addressless lists as they’re probably undefined dups
+		# ignore addressless lists as they're probably undefined dups
 		for parts in foundparts:
 			if len(parts) == 2:
 				continue

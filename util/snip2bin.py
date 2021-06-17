@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 ##############################################################################
-##                                  SwowS™                                  ##
+##                              POKeMON SwowS!                              ##
 ##                                                                          ##
-##                    Copyright © 2021 Alexander Nicholi                    ##
+##                   Copyright (C) 2021 Alexander Nicholi                   ##
 ##                       Released under BSD-0-Clause.                       ##
 ##############################################################################
-## PokéSnip bytecode serialiser
+## PokeSnip bytecode serialiser
 ##
-## This program takes ASCII-encoded text of the Pokétext Snippet format
+## This program takes ASCII-encoded text of the Poketext Snippet format
 ## (a.k.a. snips), and serialises it into its binary equivalent. Like
-## ‘scrip2o’, it produces an object code file, passing on symbol resolution to
+## scrip2o, it produces an object code file, passing on symbol resolution to
 ## the linker transparently.
 
 HELP_TEXT = '''
-PokéSnip bytecode serialiser
-Copyright © 2019-2021 Alexander Nicholi.
+Pok\u00E9Snip bytecode serialiser
+Copyright \u00A9 2019-2021 Alexander Nicholi.
 Released under BSD 0-Clause licence, a.k.a. the public domain.
 
 Usage:-
@@ -25,10 +25,10 @@ If -s or --silent is provided, the program will not send anything to
 stdout nor stderr. Otherwise, it will print status info updates as it
 works to stderr. stdout is never used.
 
-Takes <input>, a PokéSnip compatible ASCII text file, and serialises it
+Takes <input>, a Pok\u00E9Snip compatible ASCII text file, and serialises it
 into its binary equivalent, passing symbol resolution onto the linker by
 outputting an object code file [output] (or stdout if omitted). If <input>
-is ‘-’, stdin is read for text input.
+is \u2018-\u2019, stdin is read for text input.
 '''
 
 TABLE = {
@@ -65,7 +65,7 @@ def convert(text):
 	bracebuf = ''
 	pokebuf = []
 	hexbuf = ''
-	# First, strip all newlines out. They’re insignificant
+	# First, strip all newlines out. They're insignificant
 	text = text.replace('\r', '').replace('\n', '')
 	# Now, parse character by character
 	for ch in text:
@@ -128,14 +128,14 @@ def main(args):
 			if args[i] == '-s' or args[i] == '--silent':
 				pass # handled above
 			elif not silent:
-				print2('WARNING: Unknown flag ‘%s’' % args[i])
+				print2('WARNING: Unknown flag \u2018%s\u2019' % args[i])
 		elif infile == '':
 			infile = args[i]
 		elif outfile == '':
 			outfile = args[i]
 		i += 1
 	if infile == '':
-		print2('Insufficient parameters specified. Exiting...')
+		if not silent: print2('Insufficient parameters specified. Exiting...')
 		return 127
 	snip = ''
 	if infile == '-':
@@ -163,12 +163,17 @@ def main(args):
 			return 127
 		snip = block.decode('utf-8')
 	output = convert(snip)
+	output_sz = len(output)
 	if outfile == '':
 		from sys import stdout
-		stdout.buffer.write(output)
+		r = stdout.buffer.write(output)
+		if r < output_sz and not silent:
+			print2('WARNING: Some of the output did not make it through')
 	else:
 		f = open(outfile, 'wb')
-		f.write(output)
+		r = f.write(output)
+		if r < output_sz and not silent:
+			print2('WARNING: Some of the output did not make it through')
 		f.close()
 	return 0
 

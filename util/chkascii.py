@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 ##############################################################################
-##                                  SwowS™                                  ##
+##                              POKeMON SwowS!                              ##
 ##                                                                          ##
-##                    Copyright © 2021 Alexander Nicholi                    ##
+##                   Copyright (C) 2021 Alexander Nicholi                   ##
 ##                       Released under BSD-0-Clause.                       ##
 ##############################################################################
 
@@ -13,7 +13,7 @@ def print2(x):
 
 HELP_TEXT = '''
 Check for ASCII validity in a file.
-Copyright © 2021 Alexander Nicholi.
+Copyright \u00A9 2021 Alexander Nicholi.
 Released under BSD 0-Clause licence, a.k.a. the public domain.
 
 Usage:-
@@ -48,12 +48,14 @@ def is_invalid(filename, allow_nul, silent):
 	blocksz = 4096
 	super_i = 0
 	for block in iter(lambda: f.read(blocksz), b''):
-		r = bad_ascii(block, blocksz, allow_nul)
-		super_i += blocksz
-		if r < blocksz:
+		curblocksz = len(block)
+		r = bad_ascii(block, curblocksz, allow_nul)
+		super_i += curblocksz
+		if r < curblocksz:
 			if not silent:
 				print2('Invalid octet at offset $%X: 0x%02X is not valid ASCII' %
 				(super_i, block[r]))
+			fail = True
 			break
 	return fail
 
@@ -74,7 +76,7 @@ def main(args):
 			elif args[i] == '-0' or args[i] == '--zero':
 				allow_nul = True
 			elif not silent:
-				print2('WARNING: Unknown flag ‘%s’' % args[i])
+				print2('WARNING: Unknown flag \u2018%s\u2019' % args[i])
 		else:
 			files.append(args[i])
 		i += 1
@@ -84,12 +86,12 @@ def main(args):
 		r = is_invalid(files[i], allow_nul, silent)
 		if r == True:
 			if not silent:
-				print2('Checksum failed on file ‘%s’!' % files[i])
+				print2('Check failed on file \u2018%s\u2019!' % files[i])
 			return 1
 		i += 1
 	if sz > 0:
 		if not silent:
-			print2('Checksum passed for all files!')
+			print2('Check passed for all files!')
 		return 0
 	else:
 		if not silent:

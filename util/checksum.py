@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 ##############################################################################
-##                                  SwowS™                                  ##
+##                              POKeMON SwowS!                              ##
 ##                                                                          ##
-##                    Copyright © 2021 Alexander Nicholi                    ##
+##                   Copyright (C) 2021 Alexander Nicholi                   ##
 ##                       Released under BSD-0-Clause.                       ##
 ##############################################################################
 
@@ -24,7 +24,7 @@ def sha2_256sum(filename):
 
 HELP_TEXT = '''
 ROM checksum verifier
-Copyright © 2021 Alexander Nicholi.
+Copyright \u00A9 2021 Alexander Nicholi.
 Released under BSD 0-Clause licence, a.k.a. the public domain.
 
 Usage:-
@@ -62,13 +62,13 @@ def main(args):
 			elif args[i] == '-s' or args[i] == '--silent':
 				pass # handled above
 			elif not silent:
-				print2('WARNING: Unknown flag ‘%s’' % args[i])
+				print2('WARNING: Unknown flag \u2018%s\u2019' % args[i])
 		elif romfpath == '':
 			romfpath = args[i]
 		elif checksum == '':
 			checksum = args[i]
 		elif not silent:
-			print2('WARNING: Excess parameter ‘%s’' % args[i])
+			print2('WARNING: Excess parameter \u2018%s\u2019' % args[i])
 		i += 1
 	if sumbyfile:
 		f = open(checksum, 'r')
