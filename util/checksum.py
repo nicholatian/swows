@@ -16,8 +16,7 @@ def sha2_256sum(filename):
 	f = open(filename, 'rb')
 	data_hash = hashlib.sha256()
 	# Read and update hash string value in blocks of 4K
-	for block in iter(lambda: f.read(4096), b''):
-		data_hash.update(block)
+	for block in iter(lambda: f.read(4096), b''): data_hash.update(block)
 	digest = data_hash.hexdigest()
 	f.close()
 	return digest
@@ -48,8 +47,7 @@ def main(args):
 	argc = len(args)
 	silent = '-s' in args or '--silent' in args
 	if argc == 1 or '-h' in args or '--help' in args:
-		if not silent:
-			print2(HELP_TEXT)
+		if not silent: print2(HELP_TEXT)
 		return 127
 	i = 1
 	sumbyfile = False
@@ -57,16 +55,12 @@ def main(args):
 	checksum = ''
 	while i < argc:
 		if args[i].startswith('-'):
-			if args[i] == '-f' or args[i] == '--file':
-				sumbyfile = True
-			elif args[i] == '-s' or args[i] == '--silent':
-				pass # handled above
+			if args[i] == '-f' or args[i] == '--file': sumbyfile = True
+			elif args[i] == '-s' or args[i] == '--silent': pass # handled above
 			elif not silent:
 				print2('WARNING: Unknown flag \u2018%s\u2019' % args[i])
-		elif romfpath == '':
-			romfpath = args[i]
-		elif checksum == '':
-			checksum = args[i]
+		elif romfpath == '': romfpath = args[i]
+		elif checksum == '': checksum = args[i]
 		elif not silent:
 			print2('WARNING: Excess parameter \u2018%s\u2019' % args[i])
 		i += 1
@@ -77,12 +71,14 @@ def main(args):
 		checksum = checksum.replace('\r', '').replace('\n', '')
 		checksum = checksum.replace('\t', '').replace(' ', '')
 	digest = sha2_256sum(romfpath)
+	if checksum == '':
+		if not silent: print2(digest + '  ' + romfpath)
+		return 0
 	if digest == checksum:
 		if not silent: print2('Checksum verification passed!')
 		return 0
-	else:
-		if not silent: print2('Checksum verification failed!')
-		return 1
+	if not silent: print2('Checksum verification failed!')
+	return 1
 
 if __name__ == '__main__':
 	from sys import argv, exit
