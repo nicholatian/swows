@@ -7,9 +7,7 @@
 ##                       Released under BSD-0-Clause.                       ##
 ##############################################################################
 
-def print2(x):
-	from sys import stderr
-	print(x, file=stderr)
+from typing import List
 
 HELP_TEXT = '''
 Check for ASCII validity in a file.
@@ -29,6 +27,10 @@ works to stderr. stdout is never used.
 The program returns exit code 0 when verification passes, and 1 when
 it fails. Printing help text returns 127.
 '''
+
+def print2(x):
+	from sys import stderr
+	print(x, file=stderr)
 
 def bad_ascii(block, sz, allow_nul):
 	i = 0
@@ -57,9 +59,10 @@ def is_invalid(filename, allow_nul, silent):
 				(super_i, block[r]))
 			fail = True
 			break
+	f.close()
 	return fail
 
-def main(args):
+def main(args : List[str]):
 	argc = len(args)
 	silent = '-s' in args or '--silent' in args
 	if argc == 1 or '-h' in args or '--help' in args:
@@ -67,7 +70,7 @@ def main(args):
 			print2(HELP_TEXT)
 		return 127
 	i = 1
-	files = []
+	files: List[str] = []
 	allow_nul = False
 	while i < argc:
 		if args[i].startswith('-'):
