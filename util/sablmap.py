@@ -36,16 +36,15 @@ def print2(x):
 	print(x, file=stderr)
 
 class BlockSprite:
-	def __init__(self, fac):
-		self.data = fac.create_software_sprite((16, 16))
-		self.view = sdl2.ext.PixelView(self.data)
+	def __init__(self):
+		self.pixels = [0, 0, 0] * 256
 
 class Renderer(sdl2.ext.SoftwareSpriteRenderSystem):
 	def __init__(self, window):
 		super(Renderer, self).__init__(window)
 
-	def render(self, sprite, x, y):
-		super(Renderer, self).render(sprite, x, y)
+	def render(self, spr):
+		super(Renderer, self).render(spr, 0, 0)
 
 class State:
 	def __init__(self, blocks, moves, width, length, silent):
@@ -56,32 +55,22 @@ class State:
 		self.silent = silent
 		self.mapview_chg = True
 		self.blockset_chg = True
-		self.win = sdl2.ext.Window('SABLMAP', WIN_DIMENSIONS)
+		self.win = sdl2.ext.Window('SABLMAP', WIN_DIMENSIONS,
+			flags=sdl2.SDL_WINDOW_ALLOW_HIGHDPI)
 		self.ren = Renderer(self.win)
 		self.fac = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE)
-		self.fbuf = self.fac.create_software_sprite(WIN_DIMENSIONS)
-		self.fview = sdl2.ext.PixelView(self.fbuf)
+		self.sprites = []
 		self.mapblocks = []
 		self.blockset = []
+		# temporary
+		self.sprites.append(self.fac.from_image('etc/sablmap.png'))
 
 	def render(self):
-		# update the frame buffer with the coherent data
-		if self.mapview_chg:
-			#self.render_mapview()
-			self.mapview_chg = False
-		if self.blockset_chg:
-			#self.render_blockset()
-			self.blockset_chg = False
-
-	def render_mapview(self):
-		for i in range(25):
-			for j in range(40):
-				self.ren.render(self.mapblocks[i][j].data, i, j)
-
-	def render_blockset(self):
-		for i in range(25):
-			for j in range(16):
-				self.ren.render(self.blockset[i][j].data, i, j)
+		i = 0
+		sprites_sz = len(self.sprites)
+		while i < sprites_sz:
+			self.ren.render(self.sprites[i])
+			i += 1
 
 def mainloop(state: State):
 	state.win.show()
@@ -93,9 +82,9 @@ def mainloop(state: State):
 	sdl2.SDL_Delay(10)
 	return False
 
-def gfxmain(blocks, moves, d, silent):
+def gfxmain(blocks, moves, width, length, silent):
 	sdl2.ext.init()
-	state: State = State(blocks, moves, d[0], d[1], silent)
+	state: State = State(blocks, moves, width, length, silent)
 	while mainloop(state) == False:
 		pass
 	sdl2.ext.quit()
@@ -108,7 +97,11 @@ def main(args):
 		if not silent:
 			print2(HELP_TEXT)
 		return 127
-	return gfxmain(0, 0, (30, 30), silent)
+	inblocks = []
+	inmoves = []
+	mapwidth = 0
+	maplength = 0
+	return gfxmain(inblocks, inmoves, mapwidth, maplength, silent)
 
 if __name__ == '__main__':
 	from sys import argv, exit
