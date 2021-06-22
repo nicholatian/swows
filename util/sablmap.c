@@ -7,56 +7,50 @@
 
 /** BEGIN #INCLUDES */
 
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include <uni/err.h>
 #include <uni/memory.h>
 #include <uni/str.h>
-#include <uni/types/int.h>
 #include <uni/types/bound.h>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
+#include <uni/types/int.h>
 
 /** END #INCLUDES */
 
 /** BEGIN #DEFINES */
 
-#define BLOCKTILE_GET_TILE(_tile) \
-	((_tile) & 0x3FF)
-#define BLOCKTILE_GET_PAL(_tile) \
-	(((_tile) >> 12) & 0xF)
-#define BLOCKTILE_GET_XFLIP(_tile) \
-	(((_tile) >> 10) & 1)
-#define BLOCKTILE_GET_YFLIP(_tile) \
-	(((_tile) >> 11) & 1)
+#define BLOCKTILE_GET_TILE( _tile ) ( (_tile)&0x3FF )
+#define BLOCKTILE_GET_PAL( _tile ) ( ( ( _tile ) >> 12 ) & 0xF )
+#define BLOCKTILE_GET_XFLIP( _tile ) ( ( ( _tile ) >> 10 ) & 1 )
+#define BLOCKTILE_GET_YFLIP( _tile ) ( ( ( _tile ) >> 11 ) & 1 )
 
-#define BLOCKTILE_SET_TILE(_tile, _n) \
-	((_tile) = (((_tile) & 0xFC00) | ((_n) & 0x3FF)))
-#define BLOCKTILE_SET_PAL(_tile, _n) \
-	((_tile) = (((_tile) & 0xFFF) | (((_n) & 0xF) << 12)))
-#define BLOCKTILE_SET_XFLIP(_tile, _n) \
-	((_tile) = (((_tile) & 0xFBFF) | (((_n) & 1) << 10)))
-#define BLOCKTILE_SET_YFLIP(_tile, _n) \
-	((_tile) = (((_tile) & 0xF7FF) | (((_n) & 1) << 11)))
+#define BLOCKTILE_SET_TILE( _tile, _n ) \
+	( ( _tile ) = ( ( (_tile)&0xFC00 ) | ( (_n)&0x3FF ) ) )
+#define BLOCKTILE_SET_PAL( _tile, _n ) \
+	( ( _tile ) = ( ( (_tile)&0xFFF ) | ( ( (_n)&0xF ) << 12 ) ) )
+#define BLOCKTILE_SET_XFLIP( _tile, _n ) \
+	( ( _tile ) = ( ( (_tile)&0xFBFF ) | ( ( (_n)&1 ) << 10 ) ) )
+#define BLOCKTILE_SET_YFLIP( _tile, _n ) \
+	( ( _tile ) = ( ( (_tile)&0xF7FF ) | ( ( (_n)&1 ) << 11 ) ) )
 
-#define BLOCK_GET_TILE(_block) \
-	((_block) & 0x3FF)
-#define BLOCK_GET_MOVE(_block) \
-	(((_block) >> 10) & 0x3F)
+#define BLOCK_GET_TILE( _block ) ( (_block)&0x3FF )
+#define BLOCK_GET_MOVE( _block ) ( ( ( _block ) >> 10 ) & 0x3F )
 
-#define BLOCK_SET_TILE(_block, _n) \
-	((_block) = (((_block) & 0xFC00) | ((_n) & 0x3FF)))
-#define BLOCK_SET_MOVE(_block, _n) \
-	((_block) = (((_block) & 0x3FF) | (((_n) & 0x3F) << 10)))
+#define BLOCK_SET_TILE( _block, _n ) \
+	( ( _block ) = ( ( (_block)&0xFC00 ) | ( (_n)&0x3FF ) ) )
+#define BLOCK_SET_MOVE( _block, _n ) \
+	( ( _block ) = ( ( (_block)&0x3FF ) | ( ( (_n)&0x3F ) << 10 ) ) )
 
 #if defined( CFG_BIGENDIAN )
-#define MASK_R (255 << 24)
-#define MASK_G (255 << 16)
-#define MASK_B (255 << 8)
-#define MASK_A (255)
+#define MASK_R ( 255 << 24 )
+#define MASK_G ( 255 << 16 )
+#define MASK_B ( 255 << 8 )
+#define MASK_A ( 255 )
 #elif defined( CFG_LILENDIAN )
-#define MASK_R (255)
-#define MASK_G (255 << 8)
-#define MASK_B (255 << 16)
-#define MASK_A (255 << 24)
+#define MASK_R ( 255 )
+#define MASK_G ( 255 << 8 )
+#define MASK_B ( 255 << 16 )
+#define MASK_A ( 255 << 24 )
 #endif
 
 /** END #DEFINES */
@@ -66,9 +60,9 @@
 enum
 {
 	ERR_MOD_SABLMAP = UNI_MAX_ERR_MOD,
-	FBUF_W = 960,
-	FBUF_L = 416,
-	BUF_SZ = 4096
+	FBUF_W          = 960,
+	FBUF_L          = 416,
+	BUF_SZ          = 4096
 };
 
 /** END ENUMERATION DEFINITIONS */
@@ -263,28 +257,18 @@ static uni_err_t ini_parse( const char *, struct ini * );
 
 /* take a config and obtain the blockset data from it */
 static uni_err_t ini2blockset(
-	const struct ini *,
-	const u8 *,
-	const u8 *,
-	struct blockset * );
+	const struct ini *, const u8 *, const u8 *, struct blockset * );
 
 /* render a block */
 static uni_err_t block2surf(
-	const struct blockset *,
-	u16,
-	u32,
-	SDL_Surface * );
+	const struct blockset *, u16, u32, SDL_Surface * );
 
 /* render a tile using a given palette, from 4-bit to 32-bit RGBA */
 static uni_err_t raster_tile(
-	const struct tile *,
-	const col_t[16],
-	u32,
-	const u32[64] );
+	const struct tile *, const col_t[16], u32, const u32[64] );
 
 /* render the visible part of the map for the window */
-static uni_err_t render_map_view(
-	const struct blockset *,
+static uni_err_t render_map_view( const struct blockset *,
 	const struct blockset *,
 	const struct map *,
 	b32d2,
@@ -292,20 +276,20 @@ static uni_err_t render_map_view(
 
 /* render the visible part of the blockset for the window */
 static uni_err_t render_blockset_view(
-	const struct blockset *,
-	const struct blockset *,
-	u32,
-	SDL_Surface * );
+	const struct blockset *, const struct blockset *, u32, SDL_Surface * );
 
 /* render the whole window */
-static uni_err_t render_win(
-	SDL_Surface *,
-	SDL_Surface *,
-	SDL_Surface * );
+static uni_err_t render_win( SDL_Surface *, SDL_Surface *, SDL_Surface * );
+
+/* initialise application state */
+static uni_err_t state_init( struct state * );
+
+/* finalised application state */
+static void state_fini( struct state * );
 
 static int mainloop( struct state * );
 
-static int gfx_main( u16, u16, const char *, const char *, int );
+static int gfx_main( const char *, const char *, const char * );
 
 int main( int, char *[] );
 
@@ -313,8 +297,28 @@ int main( int, char *[] );
 
 /** BEGIN STATIC CONSTANT DATA */
 
-static const char * const k_block_keys[2 + 32] = {
-	"behav",
+static const char * const k_help_text =
+	"SABLMAP map editor\n"
+	"Copyright \302\251 2021 Alexander Nicholi.\n"
+	"Released under BSD 0-Clause licence, a.k.a. the public domain.\n"
+	"\n"
+	"Usage:-\n"
+	"	sablmap [flags] <map.ini> <map.owb> <map.owm>\n"
+	"	sablmap [flags] -d|--dimensions <w>x<l> <map.owb> <map.owm>\n"
+	"\n"
+	"If -s or --silent is provided, the program will not send\n"
+	"anything to stdout nor stderr. Otherwise, it will print status\n"
+	"info as it works to stderr. stdin and stdout are never used.\n"
+	"\n";
+/* this must be broken up because ANSI C caps string literals at 509 chars */
+static const char * const k_help_text2 =
+	"If the map.ini is provided, the dimensions will be read from it\n"
+	"and used to construct the map. If it is not, the -d or\n"
+	"--dimensions flag must be given, the value of which must be of\n"
+	"the form \"<w>x<l>\" where w is horizontal width and l is\n"
+	"vertical length.";
+
+static const char * const k_block_keys[2 + 32] = { "behav",
 	"type",
 	"l0tl_tile",
 	"l0tl_pal",
@@ -347,11 +351,9 @@ static const char * const k_block_keys[2 + 32] = {
 	"l1br_tile",
 	"l1br_pal",
 	"l1br_xf",
-	"l1br_yf"
-};
+	"l1br_yf" };
 
-static const char * const k_tlt_block_keys[16] = {
-	"l2tl_tile",
+static const char * const k_tlt_block_keys[16] = { "l2tl_tile",
 	"l2tl_pal",
 	"l2tl_xf",
 	"l2tl_yf",
@@ -366,15 +368,14 @@ static const char * const k_tlt_block_keys[16] = {
 	"l2br_tile",
 	"l2br_pal",
 	"l2br_xf",
-	"l2br_yf"
-};
+	"l2br_yf" };
 
 /** END STATIC CONSTANT DATA */
 
 /** BEGIN STATIC DATA */
 
-/* whether the debug printer should work */
-static int silent = 0;
+/* whether the debug printer should be quiet actually */
+static int silent;
 
 /** END STATIC DATA */
 
@@ -384,7 +385,7 @@ static void dprint( const char * fmt, ... )
 {
 	va_list args;
 
-	if(silent)
+	if( silent )
 	{
 		return;
 	}
@@ -398,98 +399,168 @@ static void dprint( const char * fmt, ... )
 
 static uni_err_t ini_parse( const char * in, struct ini * out );
 
-static uni_err_t ini2blockset(
-	const struct ini * in_cfg,
+static uni_err_t ini2blockset( const struct ini * in_cfg,
 	const u8 * in_tileset_img,
 	const u8 * in_tileset_pal,
 	struct blockset * out );
 
-static uni_err_t block2surf(
-	const struct blockset * in_blockset,
+static uni_err_t block2surf( const struct blockset * in_blockset,
 	u16 in_blockid,
 	u32 in_flags,
 	SDL_Surface * out );
 
-static uni_err_t raster_tile(
-	const struct tile * in_tile,
+static uni_err_t raster_tile( const struct tile * in_tile,
 	const col_t in_pal[16],
 	u32 in_flags,
 	const u32 out[64] );
 
-static uni_err_t render_map_view(
-	const struct blockset * prima,
+static uni_err_t render_map_view( const struct blockset * prima,
 	const struct blockset * secunda,
 	const struct map * map,
 	b32d2 mapclip,
 	SDL_Surface * out );
 
-static uni_err_t render_blockset_view(
-	const struct blockset * prima,
+static uni_err_t render_blockset_view( const struct blockset * prima,
 	const struct blockset * secunda,
 	u32 row_offs,
 	SDL_Surface * out );
 
 static uni_err_t render_win(
-	SDL_Surface * map,
-	SDL_Surface * blockset,
-	SDL_Surface * out );
+	SDL_Surface * map, SDL_Surface * blockset, SDL_Surface * out );
 
-static int mainloop( struct state * state )
-{
-	return 0;
-}
+static int mainloop( struct state * state ) { return 0; }
 
-static int gfx_main( u16 map_w,
-u16 map_l,
-const char * owb_fpath,
-const char * owm_fpath,
-int silent )
+static int gfx_main( const char * ini_fpath,
+	const char * owb_fpath,
+	const char * owm_fpath )
 {
 	struct state state;
+
+	return 0;
 }
 
 int main( int ac, char * av[] )
 {
-	int silent = 0, dim_i = -1, i;
+	int done_flags = 0, dim_i = -1, i;
 	u16 map_w = 0, map_l = 0;
-	const char * owb_fpath = NULL;
-	const char * owm_fpath = NULL;
-	const char * ini_fpath = NULL;
-	char buf[BUF_SZ];
+	char * owb_fpath = NULL;
+	char * owm_fpath = NULL;
+	char * ini_fpath = NULL;
 
-	uni_memset( buf, 0, BUF_SZ );
+	if( ac == 1 )
+	{
+		dprint( "\n%s%s\n", k_help_text, k_help_text2 );
 
-	for( i = 0; i < ac; ++i )
+		return 0;
+	}
+
+	silent = 0;
+
+	for( i = 1; i < ac; ++i )
 	{
 		const ptri arg_sz = uni_strlen( av[i] );
 
-		if(arg_sz > BUF_SZ) {
-			dprint( "argument %lu exceeded buffer size of %u", i, BUF_SZ );
-
-			return 127;
+		/* skip over the flag value */
+		if( i == dim_i )
+		{
+			continue;
 		}
 
-		if( arg_sz >= 1 && av[i][0] == '-' )
+		if( !done_flags && arg_sz >= 1 && av[i][0] == '-' )
 		{
 			/* is a flag */
-			if( arg_sz >= 2 && av[i][1] == '-' )
+			if( arg_sz == 1 )
 			{
-				/* is a long flag */
-				uni_memcpy( buf, (const void *)&(av[i][2]), arg_sz - 2 );
+				dprint( "SABLMAP cannot accept stdin. Exiting..." );
 
-				if( uni_strequ( buf, "dimensions" ) )
+				return 127;
+			}
+			else if( av[i][1] == 's' )
+			{
+				silent = 1;
+			}
+			else if( av[i][1] == 'h' )
+			{
+				dprint( "\n%s%s\n",
+					k_help_text,
+					k_help_text2 );
+
+				return 0;
+			}
+			else if( av[i][1] == '-' )
+			{
+				if( arg_sz == 2 )
 				{
-					dim_i = i;
+					done_flags = 1;
 				}
-				else if( !silent )
+				else if( uni_strequ( av[i], "--silent" ) )
 				{
-					dprint( "WARNING: Unrecognised flag \"%s\"", av[i] );
+					silent = 1;
 				}
+				else if( uni_strequ( av[i], "--help" ) )
+				{
+					dprint( "\n%s%s\n",
+						k_help_text,
+						k_help_text2 );
+
+					return 0;
+				}
+				else
+				{
+					dprint( "WARNING: Unrecognised flag \"%s\"",
+						av[i] );
+				}
+			}
+			else
+			{
+				dprint( "WARNING: Unrecognised flag \"%s\"",
+					av[i] );
+			}
+		}
+		else
+		{
+			ptri sz = uni_strlen( av[i] );
+
+			if( ini_fpath == NULL )
+			{
+				ini_fpath = uni_alloc(
+					sizeof( char ) * ( sz + 1 ) );
+
+				uni_memcpy( ini_fpath, av[i], sz );
+				ini_fpath[sz] = '\0';
+			}
+			else if( owb_fpath == NULL )
+			{
+				owb_fpath = uni_alloc(
+					sizeof( char ) * ( sz + 1 ) );
+
+				uni_memcpy( owb_fpath, av[i], sz );
+				owb_fpath[sz] = '\0';
+			}
+			else if( owm_fpath == NULL )
+			{
+				owm_fpath = uni_alloc(
+					sizeof( char ) * ( sz + 1 ) );
+
+				uni_memcpy( owm_fpath, av[i], sz );
+				owm_fpath[sz] = '\0';
+			}
+			else
+			{
+				dprint( "WARNING: Excess parameter \"%s\"",
+					av[i] );
 			}
 		}
 	}
 
-	return 0;
+	if( ini_fpath == NULL || owb_fpath == NULL || owm_fpath == NULL )
+	{
+		dprint( "Insufficient parameters. Exiting..." );
+
+		return 127;
+	}
+
+	return gfx_main( ini_fpath, owb_fpath, owm_fpath );
 }
 
 /** END FUNCTION DEFINITIONS */
