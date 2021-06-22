@@ -9,6 +9,8 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <errno.h>
+#include <string.h>
 #include <uni/err.h>
 #include <uni/memory.h>
 #include <uni/str.h>
@@ -62,7 +64,8 @@ enum
 	ERR_MOD_SABLMAP = UNI_MAX_ERR_MOD,
 	FBUF_W          = 960,
 	FBUF_L          = 416,
-	BUF_SZ          = 4096
+	BUF_SZ          = 4096,
+	INI_BOOLSTRS_SZ = 11
 };
 
 /** END ENUMERATION DEFINITIONS */
@@ -104,6 +107,7 @@ struct ini
 {
 	struct ini_pair * gpairs;
 	struct ini_sect * sects;
+	ptri gpairs_sz;
 	ptri sects_sz;
 };
 
@@ -157,8 +161,8 @@ struct map
 struct map_props
 {
 	u32 flash : 1;
-	u32 bike : 1;
-	u32 run : 1;
+	u32 biking : 1;
+	u32 running : 1;
 	u32 rope : 1;
 	u32 showname : 1;
 	u32 weather : 4;
@@ -248,6 +252,15 @@ struct state
 
 /** BEGIN FORWARD DECLARATIONS */
 
+/* check if a string from an INI key value is boolean and falsey. */
+static int ini_falsey( const char * );
+
+/* check if a string from an INI key value is boolean and truthy. */
+static int ini_truthy( const char * );
+
+/* coerce an INI key into boolean and return its value. */
+static int ini_bool( const char * );
+
 /* debug printer. does printf-style formatting and sends to stderr.
  * if silent is non-zero, this function is silent. */
 static void dprint( const char *, ... );
@@ -282,7 +295,8 @@ static uni_err_t render_blockset_view(
 static uni_err_t render_win( SDL_Surface *, SDL_Surface *, SDL_Surface * );
 
 /* initialise application state */
-static uni_err_t state_init( struct state * );
+static uni_err_t state_init(
+	struct state *, const char *, const char *, const char * );
 
 /* finalised application state */
 static void state_fini( struct state * );
@@ -304,19 +318,10 @@ static const char * const k_help_text =
 	"\n"
 	"Usage:-\n"
 	"	sablmap [flags] <map.ini> <map.owb> <map.owm>\n"
-	"	sablmap [flags] -d|--dimensions <w>x<l> <map.owb> <map.owm>\n"
 	"\n"
 	"If -s or --silent is provided, the program will not send\n"
 	"anything to stdout nor stderr. Otherwise, it will print status\n"
-	"info as it works to stderr. stdin and stdout are never used.\n"
-	"\n";
-/* this must be broken up because ANSI C caps string literals at 509 chars */
-static const char * const k_help_text2 =
-	"If the map.ini is provided, the dimensions will be read from it\n"
-	"and used to construct the map. If it is not, the -d or\n"
-	"--dimensions flag must be given, the value of which must be of\n"
-	"the form \"<w>x<l>\" where w is horizontal width and l is\n"
-	"vertical length.";
+	"info as it works to stderr. stdin and stdout are never used.";
 
 static const char * const k_block_keys[2 + 32] = { "behav",
 	"type",
@@ -370,6 +375,30 @@ static const char * const k_tlt_block_keys[16] = { "l2tl_tile",
 	"l2br_xf",
 	"l2br_yf" };
 
+static const char * const k_truthy_strs[INI_BOOLSTRS_SZ] = { "true",
+	"True",
+	"TRUE",
+	"y",
+	"Y",
+	"yes",
+	"Yes",
+	"YES",
+	"on",
+	"On",
+	"ON" };
+
+static const char * const k_falsey_strs[INI_BOOLSTRS_SZ] = { "false",
+	"False",
+	"FALSE",
+	"n",
+	"N",
+	"no",
+	"No",
+	"NO",
+	"off",
+	"Off",
+	"OFF" };
+
 /** END STATIC CONSTANT DATA */
 
 /** BEGIN STATIC DATA */
@@ -380,6 +409,41 @@ static int silent;
 /** END STATIC DATA */
 
 /** BEGIN FUNCTION DEFINITIONS */
+
+static int ini_falsey( const char * in )
+{
+	ptri i;
+
+	for( i = 0; i < INI_BOOLSTRS_SZ; ++i )
+	{
+		if( uni_strequ( k_falsey_strs[i], in ) )
+		{
+			return 1;
+		}
+	}
+
+	return strtoul( in, NULL, 0 ) == 0 ? 1 : 0;
+}
+
+static int ini_truthy( const char * in )
+{
+	ptri i;
+
+	for( i = 0; i < INI_BOOLSTRS_SZ; ++i )
+	{
+		if( uni_strequ( k_truthy_strs[i], in ) )
+		{
+			return 1;
+		}
+	}
+
+	return strtoul( in, NULL, 0 ) == 1 ? 1 : 0;
+}
+
+static int ini_bool( const char * in )
+{
+	return ini_falsey( in ) ? 0 : ini_truthy( in ) ? 1 : -1;
+}
 
 static void dprint( const char * fmt, ... )
 {
@@ -430,11 +494,210 @@ static uni_err_t render_win(
 
 static int mainloop( struct state * state ) { return 0; }
 
+static uni_err_t state_init( struct state * state,
+	const char * ini_fpath,
+	const char * owb_fpath,
+	const char * owm_fpath )
+{
+#if 0
+	uni_err_t r;
+	struct ini ini;
+	ptri i;
+
+	r = ini_parse( ini_fpath, &ini );
+
+	if( r )
+	{
+		return r;
+	}
+
+	for( i = 0; i < ini.gpairs_sz; ++i )
+	{
+		char * const key   = ini.gpairs[i].key;
+		char * const value = ini.gpairs[i].value;
+		unsigned long n    = strtoul( value, NULL, 0 );
+
+		if( uni_strequ( key, "bankid" ) )
+		{
+			if( errno == ERANGE )
+			{
+				return UNI_ERRCODE_MAKE( UNI_MAX_ERR_DESC,
+					ERR_MOD_SABLMAP,
+					UNI_ERR_EFLAG_BADINPUT,
+					UNI_ERR_LVL_PERM );
+			}
+
+			n = n > U8_MAX ? U8_MAX : n;
+
+			state->props.bankid = (u8)n;
+		}
+		else if( uni_strequ( key, "mapid" ) )
+		{
+			if( errno == ERANGE )
+			{
+				return UNI_ERRCODE_MAKE( UNI_MAX_ERR_DESC,
+					ERR_MOD_SABLMAP,
+					UNI_ERR_EFLAG_BADINPUT,
+					UNI_ERR_LVL_PERM );
+			}
+
+			n = n > U8_MAX ? U8_MAX : n;
+
+			state->props.mapid = (u8)n;
+		}
+		else if( uni_strequ( key, "bgm" ) )
+		{
+			if( errno == ERANGE )
+			{
+				return UNI_ERRCODE_MAKE( UNI_MAX_ERR_DESC,
+					ERR_MOD_SABLMAP,
+					UNI_ERR_EFLAG_BADINPUT,
+					UNI_ERR_LVL_PERM );
+			}
+
+			n = n > U16_MAX ? U16_MAX : n;
+
+			state->props.bgm = n;
+		}
+		else if( uni_strequ( key, "scene" ) )
+		{
+			if( errno == ERANGE )
+			{
+				return UNI_ERRCODE_MAKE( UNI_MAX_ERR_DESC,
+					ERR_MOD_SABLMAP,
+					UNI_ERR_EFLAG_BADINPUT,
+					UNI_ERR_LVL_PERM );
+			}
+
+			n = n > 0xF ? 0xF : n;
+
+			state->props.scene = n;
+		}
+		else if( uni_strequ( key, "xlen" ) )
+		{
+			if( errno == ERANGE )
+			{
+				return UNI_ERRCODE_MAKE( UNI_MAX_ERR_DESC,
+					ERR_MOD_SABLMAP,
+					UNI_ERR_EFLAG_BADINPUT,
+					UNI_ERR_LVL_PERM );
+			}
+
+			n = n > U16_MAX ? U16_MAX : n;
+
+			state->map.w = (u16)n;
+		}
+		else if( uni_strequ( key, "ylen" ) )
+		{
+			if( errno == ERANGE )
+			{
+				return UNI_ERRCODE_MAKE( UNI_MAX_ERR_DESC,
+					ERR_MOD_SABLMAP,
+					UNI_ERR_EFLAG_BADINPUT,
+					UNI_ERR_LVL_PERM );
+			}
+
+			n = n > U16_MAX ? U16_MAX : n;
+
+			state->map.l = (u16)n;
+		}
+		else if( uni_strequ( key, "flash" ) )
+		{
+			r = ini_bool( value );
+
+			if( r == -1 )
+			{
+				return UNI_ERRCODE_MAKE( UNI_MAX_ERR_DESC,
+					ERR_MOD_SABLMAP,
+					UNI_ERR_EFLAG_BADSTATE,
+					UNI_ERR_LVL_PERM );
+			}
+
+			state->props.flash = r;
+		}
+		else if( uni_strequ( key, "running" ) )
+		{
+			r = ini_bool( value );
+
+			if( r == -1 )
+			{
+				return UNI_ERRCODE_MAKE( UNI_MAX_ERR_DESC,
+					ERR_MOD_SABLMAP,
+					UNI_ERR_EFLAG_BADSTATE,
+					UNI_ERR_LVL_PERM );
+			}
+
+			state->props.running = r;
+		}
+		else if( uni_strequ( key, "biking" ) )
+		{
+			r = ini_bool( value );
+
+			if( r == -1 )
+			{
+				return UNI_ERRCODE_MAKE( UNI_MAX_ERR_DESC,
+					ERR_MOD_SABLMAP,
+					UNI_ERR_EFLAG_BADSTATE,
+					UNI_ERR_LVL_PERM );
+			}
+
+			state->props.biking = r;
+		}
+		else if( uni_strequ( key, "rope" ) )
+		{
+			r = ini_bool( value );
+
+			if( r == -1 )
+			{
+				return UNI_ERRCODE_MAKE( UNI_MAX_ERR_DESC,
+					ERR_MOD_SABLMAP,
+					UNI_ERR_EFLAG_BADSTATE,
+					UNI_ERR_LVL_PERM );
+			}
+
+			state->props.rope = r;
+		}
+		else if( uni_strequ( key, "showname" ) )
+		{
+			r = ini_bool( value );
+
+			if( r == -1 )
+			{
+				return UNI_ERRCODE_MAKE( UNI_MAX_ERR_DESC,
+					ERR_MOD_SABLMAP,
+					UNI_ERR_EFLAG_BADSTATE,
+					UNI_ERR_LVL_PERM );
+			}
+
+			state->props.showname = r;
+		}
+	}
+#endif /* 0 */
+
+	return 0;
+}
+
+static void state_fini( struct state * state ) {}
+
 static int gfx_main( const char * ini_fpath,
 	const char * owb_fpath,
 	const char * owm_fpath )
 {
 	struct state state;
+	uni_err_t r;
+
+	r = state_init( &state, ini_fpath, owb_fpath, owm_fpath );
+
+	if( r )
+	{
+		/* TODO: Parse and print error */
+		return 1;
+	}
+
+	while( !mainloop( &state ) )
+		;
+
+	state_fini( &state );
 
 	return 0;
 }
@@ -449,7 +712,7 @@ int main( int ac, char * av[] )
 
 	if( ac == 1 )
 	{
-		dprint( "\n%s%s\n", k_help_text, k_help_text2 );
+		dprint( "\n%s\n", k_help_text );
 
 		return 0;
 	}
@@ -481,9 +744,7 @@ int main( int ac, char * av[] )
 			}
 			else if( av[i][1] == 'h' )
 			{
-				dprint( "\n%s%s\n",
-					k_help_text,
-					k_help_text2 );
+				dprint( "\n%s\n", k_help_text );
 
 				return 0;
 			}
@@ -499,9 +760,7 @@ int main( int ac, char * av[] )
 				}
 				else if( uni_strequ( av[i], "--help" ) )
 				{
-					dprint( "\n%s%s\n",
-						k_help_text,
-						k_help_text2 );
+					dprint( "\n%s\n", k_help_text );
 
 					return 0;
 				}
