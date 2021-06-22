@@ -1,3 +1,8 @@
 {
-	"python.analysis.extraPaths": ["./util"]
+	"python.analysis.extraPaths": [
+		"./util"
+	],
+	"files.associations": {
+		"*.h": "c"
+	}
 }
