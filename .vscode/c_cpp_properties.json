@@ -4,17 +4,46 @@
 			"name": "Mac",
 			"includePath": [
 				"${workspaceFolder}/src",
-				"/usr/local/armv4t-agb-eabi/include"
+				"/usr/local/include",
+				"/usr/local/include/glib-2.0",
+				"/usr/local/lib/glib-2.0/include"
+			],
+			"defines": [
+				"CFG_DARWIN",
+				"CFG_AMD64",
+				"CFG_LILENDIAN",
+				"CFG_WORDSZ_64",
+				"CFG_LONGSZ_64",
+				"CFG_HAVE_I32",
+				"CFG_HAVE_I64",
+				"CFG_HAVE_FP",
+				"CFG_FP_HARD",
+				"CFG_FP_SOFT",
+				"__VSCODE_INTELLISENSE__"
 			],
 			"cStandard": "c89",
 			"cppStandard": "c++11",
 			"macFrameworkPath": [],
-			"compilerPath": "/opt/devkitpro/devkitARM/bin/arm-none-eabi-gcc"
+			"compilerPath": "/usr/local/opt/gcc/bin/gcc-10"
 		}, {
 			"name": "Linux",
 			"includePath": [
 				"${workspaceFolder}/src",
-				"/usr/armv4t-agb-eabi/include"
+				"/usr/local/include",
+				"/usr/include"
+			],
+			"defines": [
+				"CFG_LINUX",
+				"CFG_AMD64",
+				"CFG_LILENDIAN",
+				"CFG_WORDSZ_64",
+				"CFG_LONGSZ_64",
+				"CFG_HAVE_I32",
+				"CFG_HAVE_I64",
+				"CFG_HAVE_FP",
+				"CFG_FP_HARD",
+				"CFG_FP_SOFT",
+				"__VSCODE_INTELLISENSE__"
 			],
 			"cStandard": "c89",
 			"cppStandard": "c++11",
