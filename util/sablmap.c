@@ -317,7 +317,7 @@ static const char * const k_help_text =
 	"Released under BSD 0-Clause licence, a.k.a. the public domain.\n"
 	"\n"
 	"Usage:-\n"
-	"	sablmap [flags] <map.ini> <map.owb> <map.owm>\n"
+	"\tsablmap [flags] <map.ini> <map.owb> <map.owm>\n"
 	"\n"
 	"If -s or --silent is provided, the program will not send\n"
 	"anything to stdout nor stderr. Otherwise, it will print status\n"
