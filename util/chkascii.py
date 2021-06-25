@@ -32,7 +32,11 @@ def print2(x):
 	from sys import stderr
 	print(x, file=stderr)
 
-def bad_ascii(block, sz, allow_nul):
+def bad_ascii(block : bytes, sz : int, allow_nul : bool):
+	assert(type(block) is bytes)
+	assert(type(sz) is int)
+	assert(sz >= 0)
+	assert(type(allow_nul) is bool)
 	i = 0
 	sz = len(block)
 	lower = 0 if allow_nul else 1

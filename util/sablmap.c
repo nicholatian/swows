@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <string.h>
 #include <uni/err.h>
+#include <uni/futils.h>
 #include <uni/memory.h>
 #include <uni/str.h>
 #include <uni/types/bound.h>
@@ -68,6 +69,36 @@ enum
 	INI_BOOLSTRS_SZ = 11
 };
 
+enum
+{
+	INI_PARSER_BLANK = 0,
+	INI_PARSER_SECTION,
+	INI_PARSER_KEY,
+	INI_PARSER_VALUE
+};
+
+enum
+{
+	INI_LEXEME_MALFORMED,
+	INI_LEXEME_BLANK,
+	INI_LEXEME_SECTION,
+	INI_LEXEME_PAIR,
+	INI_LEXEME_COMMENT,
+	MAX_INI_LEXEME
+};
+
+enum
+{
+	INI_STATE_MALFORMED,
+	INI_STATE_BLANK,
+	INI_STATE_SECTION,
+	INI_STATE_KEY,
+	INI_STATE_VALUE,
+	INI_STATE_COMMENT,
+	INI_STATE_POST_SECTION,
+	MAX_INI_STATE
+};
+
 /** END ENUMERATION DEFINITIONS */
 
 /** BEGIN TYPEDEFS */
@@ -91,7 +122,7 @@ typedef u32 col_t;
 struct ini_pair
 {
 	char * key;
-	char * value;
+	char * val;
 };
 
 /* INI config section */
@@ -109,6 +140,13 @@ struct ini
 	struct ini_sect * sects;
 	ptri gpairs_sz;
 	ptri sects_sz;
+};
+
+struct ini_lexeme
+{
+	char * value;
+	char * key;
+	u8 type;
 };
 
 /* block data, comprised of tiles + metadata and stored in a blockset */
@@ -252,6 +290,9 @@ struct state
 
 /** BEGIN FORWARD DECLARATIONS */
 
+/* check if a char is "whitespace" */
+static int is_wspace( char );
+
 /* check if a string from an INI key value is boolean and falsey. */
 static int ini_falsey( const char * );
 
@@ -322,6 +363,16 @@ static const char * const k_help_text =
 	"If -s or --silent is provided, the program will not send\n"
 	"anything to stdout nor stderr. Otherwise, it will print status\n"
 	"info as it works to stderr. stdin and stdout are never used.";
+
+static const int ini_fstate2lexeme[MAX_INI_STATE] = {
+	INI_LEXEME_MALFORMED,
+	INI_LEXEME_BLANK,
+	INI_LEXEME_MALFORMED,
+	INI_LEXEME_MALFORMED,
+	INI_LEXEME_PAIR,
+	INI_LEXEME_COMMENT,
+	INI_LEXEME_SECTION,
+};
 
 static const char * const k_block_keys[2 + 32] = { "behav",
 	"type",
@@ -410,10 +461,186 @@ static int silent;
 
 /** BEGIN FUNCTION DEFINITIONS */
 
+static int is_wspace( char c )
+{
+	return c == ' ' || c == '\t' || c == '\v' || c == '\f' || c == '\r';
+}
+
+static struct ini_lexeme ini_parse_line( const char * line )
+{
+	ptri i, buf_i, value_sz;
+	struct ini_lexeme ret;
+	unsigned state = INI_STATE_BLANK;
+	char buf[BUF_SZ];
+
+	uni_memset( &ret, 0, sizeof( struct ini_lexeme ) );
+	uni_memset( buf, 0, BUF_SZ );
+
+	for( i = 0; line[i] != '\0'; ++i )
+	{
+		char c = line[i];
+
+		if( ( (u8)c ) > 0x7F )
+		{
+			return ret;
+		}
+
+		if( state == INI_STATE_BLANK )
+		{
+			if( c == '[' )
+			{
+				state = INI_STATE_SECTION;
+				buf_i = 0;
+				uni_memset( buf, 0, BUF_SZ );
+			}
+			else if( c == ';' )
+			{
+				state = INI_STATE_COMMENT;
+				buf_i = 0;
+				uni_memset( buf, 0, BUF_SZ );
+			}
+			else if( is_wspace( c ) )
+			{
+				continue;
+			}
+			else
+			{
+				state = INI_STATE_KEY;
+				buf_i = 0;
+				uni_memset( buf, 0, BUF_SZ );
+
+				buf[buf_i] = c;
+				buf_i++;
+			}
+		}
+		else if( state == INI_STATE_SECTION )
+		{
+			if( c == ']' )
+			{
+				state = INI_STATE_POST_SECTION;
+			}
+			else
+			{
+				buf[buf_i] = c;
+				buf_i++;
+			}
+		}
+		else if( state == INI_STATE_KEY )
+		{
+			if( c == '=' )
+			{
+				const ptri buf_len = uni_strlen( buf );
+
+				if( buf_len == 0 )
+				{
+					return ret;
+				}
+
+				ret.key = uni_alloc( buf_len + 1 );
+				uni_memcpy( ret.key, buf, buf_len );
+				ret.key[buf_len] = '\0';
+
+				buf_i = 0;
+				uni_memset( buf, 0, BUF_SZ );
+
+				state = INI_STATE_VALUE;
+			}
+			else
+			{
+				buf[buf_i] = c;
+				buf_i++;
+			}
+		}
+		else if( state == INI_STATE_VALUE ||
+			state == INI_STATE_COMMENT )
+		{
+			buf[buf_i] = c;
+			buf_i++;
+		}
+		else if( state == INI_STATE_POST_SECTION )
+		{
+			if( !is_wspace( c ) )
+			{
+				return ret;
+			}
+		}
+	}
+
+	value_sz  = uni_strlen( buf );
+	ret.type  = state == INI_STATE_BLANK ? INI_STATE_BLANK
+					     : ini_fstate2lexeme[state];
+	ret.value = uni_alloc( value_sz + 1 );
+	uni_memcpy( ret.value, buf, value_sz );
+	ret.value[value_sz] = '\0';
+
+	return ret;
+}
+
+static int ini_get_lexemes(
+	const char * fpath, struct ini_lexeme ** out, ptri * sz )
+{
+	int r;
+	u8 * bytes;
+	char ** lines;
+	ptri bytes_sz, lexemes_sz, lexemes_i, i;
+	struct ini_lexeme * lexemes;
+
+	r = uni_loadfile( fpath, &bytes, &bytes_sz );
+
+	if( r )
+	{
+		return 1;
+	}
+
+	dprint( "INI file loaded" );
+
+	if( uni_strlen( (const char *)bytes ) != bytes_sz ||
+		!uni_isascii( (const char *)bytes ) )
+	{
+		dprint( "Wrong file text side" );
+		return 2;
+	}
+
+	lines = uni_strsplit( (const char *)bytes, "\n", 0 );
+
+	lexemes_i  = 0;
+	lexemes_sz = 16;
+	lexemes    = uni_alloc0( sizeof( struct ini_lexeme ) * lexemes_sz );
+
+	for( i = 0; lines[i] != NULL; ++i )
+	{
+		struct ini_lexeme lexeme = ini_parse_line( lines[i] );
+
+		if( lexeme.type == INI_LEXEME_MALFORMED )
+		{
+			dprint( "Malformed lexeme on line %lu", i + 1 );
+			return 3;
+		}
+
+		if( lexemes_i >= lexemes_sz )
+		{
+			lexemes_sz <<= 1; /* *= 2 */
+			lexemes = uni_realloc( lexemes,
+				sizeof( struct ini_lexeme ) * lexemes_sz );
+		}
+
+		uni_memcpy( &( lexemes[lexemes_i] ),
+			&lexeme,
+			sizeof( struct ini_lexeme ) );
+		lexemes_i++;
+	}
+
+	*out = lexemes;
+	*sz  = lexemes_i;
+
+	return 0;
+}
+
 static int ini_falsey( const char * in )
 {
 	ptri i;
 
+	/* check by the string list above */
 	for( i = 0; i < INI_BOOLSTRS_SZ; ++i )
 	{
 		if( uni_strequ( k_falsey_strs[i], in ) )
@@ -422,6 +649,7 @@ static int ini_falsey( const char * in )
 		}
 	}
 
+	/* check numerically */
 	return strtoul( in, NULL, 0 ) == 0 ? 1 : 0;
 }
 
@@ -429,6 +657,7 @@ static int ini_truthy( const char * in )
 {
 	ptri i;
 
+	/* check by the string list above */
 	for( i = 0; i < INI_BOOLSTRS_SZ; ++i )
 	{
 		if( uni_strequ( k_truthy_strs[i], in ) )
@@ -437,11 +666,13 @@ static int ini_truthy( const char * in )
 		}
 	}
 
+	/* check numerically */
 	return strtoul( in, NULL, 0 ) == 1 ? 1 : 0;
 }
 
 static int ini_bool( const char * in )
 {
+	/* return -1 if coercion fails */
 	return ini_falsey( in ) ? 0 : ini_truthy( in ) ? 1 : -1;
 }
 
@@ -461,7 +692,145 @@ static void dprint( const char * fmt, ... )
 	fflush( stderr );
 }
 
-static uni_err_t ini_parse( const char * in, struct ini * out );
+static uni_err_t ini_parse( const char * fpath, struct ini * out )
+{
+	ptri lexemes_sz;
+	struct ini_lexeme * lexemes;
+	struct ini ret;
+	int r, globl = 1;
+	ptri i;
+
+	uni_memset( &ret, 0, sizeof( struct ini ) );
+	r = ini_get_lexemes( fpath, &lexemes, &lexemes_sz );
+
+	if( r )
+	{
+		return UNI_ERRCODE_MAKE( UNI_MAX_ERR_DESC,
+			ERR_MOD_SABLMAP,
+			UNI_ERR_EFLAG_BADSTATE,
+			UNI_ERR_LVL_PERM );
+	}
+
+	for( i = 0; i < lexemes_sz; ++i )
+	{
+		const ptri value_sz = uni_strlen( lexemes[i].value );
+
+		if( lexemes[i].type == INI_LEXEME_MALFORMED )
+		{
+			return UNI_ERRCODE_MAKE( UNI_MAX_ERR_DESC,
+				ERR_MOD_SABLMAP,
+				UNI_ERR_EFLAG_BADSTATE,
+				UNI_ERR_LVL_PERM );
+		}
+		else if( lexemes[i].type == INI_LEXEME_SECTION )
+		{
+			if( globl )
+			{
+				ret.sects =
+					uni_alloc( sizeof( struct ini_sect ) );
+				globl = 0;
+			}
+
+			ret.sects[ret.sects_sz].name =
+				uni_alloc( sizeof( char ) * ( value_sz + 1 ) );
+			uni_memcpy( ret.sects[ret.sects_sz].name,
+				lexemes[i].value,
+				value_sz );
+			ret.sects[ret.sects_sz].name[value_sz] = '\0';
+			ret.sects_sz++;
+		}
+		else if( lexemes[i].type == INI_LEXEME_PAIR )
+		{
+			const ptri key_sz = uni_strlen( lexemes[i].key );
+
+			if( globl )
+			{
+				/* global pair */
+				if( ret.gpairs_sz == 0 )
+				{
+					ret.gpairs = uni_alloc0(
+						sizeof( struct ini_pair ) );
+				}
+				else
+				{
+					ret.gpairs = uni_realloc( ret.gpairs,
+						sizeof( struct ini_pair ) *
+							( ret.gpairs_sz +
+								1 ) );
+				}
+
+				ret.gpairs[ret.gpairs_sz].key = uni_alloc(
+					sizeof( char ) * ( key_sz + 1 ) );
+				uni_memcpy( ret.gpairs[ret.gpairs_sz].key,
+					lexemes[i].key,
+					key_sz );
+				ret.gpairs[ret.gpairs_sz].key[key_sz] = '\0';
+
+				ret.gpairs[ret.gpairs_sz].val = uni_alloc(
+					sizeof( char ) * ( value_sz + 1 ) );
+				uni_memcpy( ret.gpairs[ret.gpairs_sz].val,
+					lexemes[i].value,
+					value_sz );
+				ret.gpairs[ret.gpairs_sz].val[value_sz] = '\0';
+				ret.gpairs_sz++;
+			}
+			else
+			{
+				const ptri sect_i = ret.sects_sz - 1;
+				if( ret.sects[sect_i].pairs_sz == 0 )
+				{
+					ret.sects[sect_i].pairs = uni_alloc0(
+						sizeof( struct ini_pair ) );
+				}
+				else
+				{
+					ret.sects[sect_i].pairs = uni_realloc(
+						ret.sects[sect_i].pairs,
+						sizeof( struct ini_pair ) *
+							( ret.sects[sect_i]
+									.pairs_sz +
+								1 ) );
+				}
+
+				ret.sects[sect_i]
+					.pairs[ret.sects[sect_i].pairs_sz]
+					.key = uni_alloc(
+					sizeof( char ) * ( key_sz + 1 ) );
+				uni_memcpy( ret.sects[sect_i]
+						    .pairs[ret.sects[sect_i]
+								    .pairs_sz]
+						    .key,
+					lexemes[i].key,
+					key_sz );
+				ret.sects[sect_i]
+					.pairs[ret.sects[sect_i].pairs_sz]
+					.key[key_sz] = '\0';
+
+				ret.sects[sect_i]
+					.pairs[ret.sects[sect_i].pairs_sz]
+					.val = uni_alloc(
+					sizeof( char ) * ( value_sz + 1 ) );
+				uni_memcpy( ret.sects[sect_i]
+						    .pairs[ret.sects[sect_i]
+								    .pairs_sz]
+						    .val,
+					lexemes[i].value,
+					value_sz );
+				ret.sects[sect_i]
+					.pairs[ret.sects[sect_i].pairs_sz]
+					.val[value_sz] = '\0';
+				ret.sects[sect_i].pairs_sz++;
+			}
+		}
+	}
+
+	if( out )
+	{
+		uni_memcpy( out, &ret, sizeof( struct ini ) );
+	}
+
+	return 0;
+}
 
 static uni_err_t ini2blockset( const struct ini * in_cfg,
 	const u8 * in_tileset_img,
@@ -499,10 +868,11 @@ static uni_err_t state_init( struct state * state,
 	const char * owb_fpath,
 	const char * owm_fpath )
 {
-#if 0
 	uni_err_t r;
 	struct ini ini;
 	ptri i;
+	char prima_ident[BUF_SZ];
+	char secunda_ident[BUF_SZ];
 
 	r = ini_parse( ini_fpath, &ini );
 
@@ -514,8 +884,10 @@ static uni_err_t state_init( struct state * state,
 	for( i = 0; i < ini.gpairs_sz; ++i )
 	{
 		char * const key   = ini.gpairs[i].key;
-		char * const value = ini.gpairs[i].value;
+		char * const value = ini.gpairs[i].val;
 		unsigned long n    = strtoul( value, NULL, 0 );
+
+		dprint( "%s=%s", key, value );
 
 		if( uni_strequ( key, "bankid" ) )
 		{
@@ -671,8 +1043,12 @@ static uni_err_t state_init( struct state * state,
 
 			state->props.showname = r;
 		}
+		else
+		{
+			dprint( "Unknown key \"%s\" in global section of map INI",
+				key );
+		}
 	}
-#endif /* 0 */
 
 	return 0;
 }
@@ -687,6 +1063,15 @@ static int gfx_main( const char * ini_fpath,
 	uni_err_t r;
 
 	r = state_init( &state, ini_fpath, owb_fpath, owm_fpath );
+
+	if( r )
+	{
+		dprint( "state_init() failed" );
+	}
+
+	dprint( "bankid: %u\nmapid: %u",
+		state.props.bankid,
+		state.props.mapid );
 
 	if( r )
 	{
