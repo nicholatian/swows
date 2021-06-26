@@ -279,6 +279,7 @@ class Blockset:
 		tmp = PILImage.open(tset_fpath)
 		# convert to 8-bit grayscale
 		tset = tmp.convert('L')
+		#tset.show()
 		tmp.close()
 		tiles: List[Tile] = []
 		tiles_w = tset.size[0] // 8
@@ -603,11 +604,13 @@ def tile2surf(tile : Tile, alpha : bool, pal : List[PixelRGBA8]):
 		raw[(i << 2) + 0] = pal[idx].data & 0xFF
 		raw[(i << 2) + 1] = (pal[idx].data >> 8) & 0xFF
 		raw[(i << 2) + 2] = (pal[idx].data >> 16) & 0xFF
-		if alpha and idx == 0: raw[(i << 2) + 3] = 0
-		else: raw[(i << 2) + 3] == 25
+		if alpha and idx == 0:
+			raw[(i << 2) + 3] = 0
+		else:
+			raw[(i << 2) + 3] = 255
 		i += 1
-	surf = SDL2.SDL_CreateRGBSurfaceFrom(bytes(raw), MAPVIEW_W, MAPVIEW_H,
-		32, 4 * MAPVIEW_W, MASK_R, MASK_G, MASK_B, MASK_A)
+	surf = SDL2.SDL_CreateRGBSurfaceFrom(bytes(raw), 8, 8,
+		32, 4 * 8, MASK_R, MASK_G, MASK_B, MASK_A)
 	SDL2.SDL_SetSurfaceBlendMode(surf, SDL2.SDL_BLENDMODE_BLEND)
 	return surf
 
@@ -624,8 +627,8 @@ xoffs : int, yoffs : int, mov_opacity: float, fbuf : SDL2.SDL_Surface):
 	assert(mov_opacity >= 0.0 and mov_opacity <= 1.0)
 	mov_opacity = 0.0
 	visiblocks: List[List[int]] = []
-	for row in mapdata.blocks[yoffs:MAPVIEW_H + yoffs]:
-		visiblocks.append(row[xoffs:MAPVIEW_W + xoffs])
+	for row in mapdata.blocks[yoffs:(MAPVIEW_H // 16) + yoffs]:
+		visiblocks.append(row[xoffs:(MAPVIEW_W // 16) + xoffs])
 	for y, row in enumerate(visiblocks):
 		for x, block in enumerate(row):
 			bblock = None
@@ -690,8 +693,8 @@ def mainloop(state : State):
 				state.onsplash = False
 				state.loadmap = True
 		if state.loadmap:
-			render_mapview(state.prima, state.secunda, state.mapdata,
-				0, 0, 0.0, state.program.fbuf)
+			render_mapview(state.prima, state.secunda, state.mapdata, 0, 0, 0.0,
+				state.program.fbuf)
 			state.req_update()
 			state.loadmap = False
 	if state.need_update():
