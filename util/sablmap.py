@@ -12,6 +12,10 @@ from typing import List, Literal, Tuple, Dict
 from PIL import Image as PILImage
 
 from ctypes import byref as Ref
+from ctypes import POINTER as Pointer
+from ctypes import c_uint32 as Uint32
+from ctypes import cast
+import sdl2.ext as SDL2Ext
 import os as OS
 import re as RegExp
 import sdl2 as SDL2
@@ -601,49 +605,84 @@ def render0(mdata : MapData, tset : Tileset, bset : Blockset):
 	assert(type(mdata) is MapData)
 	assert(type(tset) is Tileset)
 	assert(type(bset) is Blockset)
-	r_sz = mdata.w * mdata.h
-	r1 = bytearray(r_sz * 256) # layer 0
-	r2 = bytearray(r_sz * 256) # layer 1
-	i = 0
-	while i < r_sz:
-		# copy pixel data one block at a time
-		# each block copied one tile at a time
-		# each tile copied one row at a time
-		x = i % mdata.w
-		y = i // mdata.w
-		blockid = mdata.readblock(x, y)
-		tilepels: List[bytes] = [
-			tset.readtile8(bset.readtile(blockid, 0, 0)),
-			tset.readtile8(bset.readtile(blockid, 0, 1)),
-			tset.readtile8(bset.readtile(blockid, 0, 2)),
-			tset.readtile8(bset.readtile(blockid, 0, 3)),
-			tset.readtile8(bset.readtile(blockid, 1, 0)),
-			tset.readtile8(bset.readtile(blockid, 1, 1)),
-			tset.readtile8(bset.readtile(blockid, 1, 2)),
-			tset.readtile8(bset.readtile(blockid, 1, 3))
-		]
-		b = 0
-		while b < 4:
-			a = 0
-			while a < 8:
-				offs = (((y + a + (((b >> 1) & 1) << 3)) * mdata.w) << 5) + \
-					((x + (b & 1)) << 5)
-				a8 = a << 3 # a * 8
-				r1[offs:offs + 8] = tilepels[b][a8:a8 + 8]
-				a += 1
-			b += 1
-		b = 4
-		while b < 8:
-			a = 0
-			while a < 8:
-				offs = (((y + a + (((b >> 1) & 1) << 3)) << 5) * mdata.w) + \
-					((x + (b & 1)) << 5)
-				a8 = a << 3 # a * 8
-				r2[offs:offs + 8] = tilepels[b][a8:a8 + 8]
-				a += 1
-			b += 1
-		i += 1
-	return (bytes(r1), bytes(r2))
+	r = SDL2.SDL_CreateRGBSurfaceWithFormat(0, mdata.w * 16, mdata.h * 16, 32,
+		SDL2.SDL_PIXELFORMAT_RGBA8888)
+	view = SDL2Ext.PixelView(r.contents)
+	y = 0
+	while y < mdata.h:
+		x = 0
+		while x < mdata.w:
+			blockid = mdata.readblock(x, y)
+			# each tile is a 64-long array of pixels
+			# each pixel is a 1-byte index of a palette 0-15
+			tilepels: List[bytes] = [
+				# top left, layer 0
+				tset.readtile8(bset.readtile(blockid, 0, 0)),
+				# top right, layer 0
+				tset.readtile8(bset.readtile(blockid, 0, 1)),
+				# bottom left, layer 0
+				tset.readtile8(bset.readtile(blockid, 0, 2)),
+				# bottom right, layer 0
+				tset.readtile8(bset.readtile(blockid, 0, 3)),
+				# top left, layer 1
+				tset.readtile8(bset.readtile(blockid, 1, 0)),
+				# top right, layer 1
+				tset.readtile8(bset.readtile(blockid, 1, 1)),
+				# bottom left, layer 1
+				tset.readtile8(bset.readtile(blockid, 1, 2)),
+				# bottom right, layer 1
+				tset.readtile8(bset.readtile(blockid, 1, 3))
+			]
+			# layer 0 gets written to r1
+			# layer 1 gets written to r2
+			assert(len(tilepels[0]) == 64)
+			# copy top left tile
+			pel_x = x * 16
+			pel_y = y * 16
+			pel_w = mdata.w * 16
+			i = 0
+			while i < 64:
+				gray = int(tilepels[0][i]) << 4
+				t = 0 if gray == 0 else 255
+				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
+					gray | (gray << 8) | (gray << 16) | (t << 24)
+				i += 1
+			# copy top right tile
+			pel_x = (x * 16) + 8
+			pel_y = y * 16
+			pel_w = mdata.w * 16
+			i = 0
+			while i < 64:
+				gray = int(tilepels[1][i]) << 4
+				t = 0 if gray == 0 else 255
+				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
+					gray | (gray << 8) | (gray << 16) | (t << 24)
+				i += 1
+			# copy bottom left tile
+			pel_x = x * 16
+			pel_y = (y * 16) + 8
+			pel_w = mdata.w * 16
+			i = 0
+			while i < 64:
+				gray = int(tilepels[2][i]) << 4
+				t = 0 if gray == 0 else 255
+				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
+					gray | (gray << 8) | (gray << 16) | (t << 24)
+				i += 1
+			# copy bottom right tile
+			pel_x = (x * 16) + 8
+			pel_y = (y * 16) + 8
+			pel_w = mdata.w * 16
+			i = 0
+			while i < 64:
+				gray = int(tilepels[3][i]) << 4
+				t = 0 if gray == 0 else 255
+				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
+					gray | (gray << 8) | (gray << 16) | (t << 24)
+				i += 1
+			x += 1
+		y += 1
+	return r
 
 def pil2sdl(lis : List[Tuple]):
 	assert(type(lis) is list)
@@ -659,24 +698,6 @@ def pil2sdl(lis : List[Tuple]):
 		ret_i += 4
 		i += 1
 	return bytes(ret)
-
-def render1(pics: Tuple[bytes, bytes], pal: List[Tuple[int, int, int]],
-w : int, h : int):
-	pics_sz = len(pics[0])
-	newmap = bytearray(pics_sz << 2) # * 4
-	i = 0
-	while i < pics_sz:
-		idx = int(pics[0][i])
-		newmap[i << 2] = pal[idx][0] & 0xFF
-		newmap[(i << 2) + 1] = (pal[idx][1] >> 8) & 0xFF
-		newmap[(i << 2) + 2] = (pal[idx][2] >> 16) & 0xFF
-		newmap[(i << 2) + 3] = 255
-		i += 1
-	imag = PILImage.frombytes('RGBA', (w, h), bytes(newmap))
-	r: SDL2.SDL_Surface = SDL2.SDL_CreateRGBSurfaceFrom(
-		pil2sdl(list(imag.getdata())), w, h, 32,
-		4 * w, MASK_R, MASK_G, MASK_B, MASK_A)
-	return r
 
 def mainloop(state : State):
 	e = SDL2.SDL_Event()
@@ -696,8 +717,7 @@ def mainloop(state : State):
 				state.onsplash = False
 				state.loadmap = True
 		if state.loadmap:
-			pics = render0(state.mapdata, state.tprima, state.bprima)
-			surf = render1(pics, state.pprima, state.mapdata.w << 4, state.mapdata.h << 4)
+			surf = render0(state.mapdata, state.tprima, state.bprima)
 			MAP_RECT = SDL2.SDL_Rect(0, 0, state.mapdata.w << 4,
 				state.mapdata.h << 4)
 			SDL2.SDL_BlitSurface(surf, MAP_RECT, state.fbuf, FBUF_RECT)
