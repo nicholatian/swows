@@ -754,7 +754,7 @@ psecunda: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
 				i += 1
 			x += 1
 		y += 1
-	rect = SDL2.SDL_Rect(0, 0, mdata.w * 16, mdata.h * 16)
+	rect = SDL2.SDL_Rect(0, 0, mapview[2], mapview[3])
 	SDL2.SDL_BlitSurface(r2, rect, r1, rect)
 	return r1
 
