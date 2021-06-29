@@ -602,22 +602,22 @@ class State:
 #  -> this takes a 1D bytearray and colours onto an SDL_Surface
 
 def render0(mdata : MapData, tset : Tileset, bset : Blockset,
-pals: List[Tuple[int, int, int]]):
+pals: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
 	assert(type(mdata) is MapData)
 	assert(type(tset) is Tileset)
 	assert(type(bset) is Blockset)
-	r1 = SDL2.SDL_CreateRGBSurfaceWithFormat(0, mdata.w * 16, mdata.h * 16, 32,
-		SDL2.SDL_PIXELFORMAT_RGBA8888)
-	r2 = SDL2.SDL_CreateRGBSurfaceWithFormat(0, mdata.w * 16, mdata.h * 16, 32,
-		SDL2.SDL_PIXELFORMAT_RGBA8888)
+	r1 = SDL2.SDL_CreateRGBSurfaceWithFormat(0, mapview[2] * 16,
+		mapview[3] * 16, 32, SDL2.SDL_PIXELFORMAT_RGBA8888)
+	r2 = SDL2.SDL_CreateRGBSurfaceWithFormat(0, mapview[2] * 16,
+		mapview[3] * 16, 32, SDL2.SDL_PIXELFORMAT_RGBA8888)
 	SDL2.SDL_SetSurfaceBlendMode(r1, SDL2.SDL_BLENDMODE_NONE)
 	SDL2.SDL_SetSurfaceBlendMode(r1, SDL2.SDL_BLENDMODE_BLEND)
 	view = SDL2Ext.PixelView(r1.contents)
 	view2 = SDL2Ext.PixelView(r2.contents)
-	y = 0
-	while y < mdata.h:
-		x = 0
-		while x < mdata.w:
+	y = mapview[1]
+	while y < mdata.h and y < mapview[3]:
+		x = mapview[0]
+		while x < mdata.w and y < mapview[2]:
 			blockid = mdata.readblock(x, y)
 			# each tile is a 64-long array of pixels
 			# each pixel is a 1-byte index of a palette 0-15
@@ -778,7 +778,7 @@ def mainloop(state : State):
 				state.loadmap = True
 		if state.loadmap:
 			surf = render0(state.mapdata, state.tprima, state.bprima,
-				state.pprima)
+				state.pprima, (0, 0, 640 // 16, 400 // 16))
 			MAP_RECT = SDL2.SDL_Rect(0, 0, state.mapdata.w << 4,
 				state.mapdata.h << 4)
 			SDL2.SDL_BlitSurface(surf, MAP_RECT, state.fbuf, FBUF_RECT)
