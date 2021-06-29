@@ -601,11 +601,16 @@ class State:
 # render1: colour tiles by palette, apply transparency
 #  -> this takes a 1D bytearray and colours onto an SDL_Surface
 
-def render0(mdata : MapData, tset : Tileset, bset : Blockset,
-pals: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
+def render0(mdata : MapData, tprima : Tileset, tsecunda : Tileset,
+bprima : Blockset, bsecunda : Blockset, pprima : List[Tuple[int, int, int]],
+psecunda: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
 	assert(type(mdata) is MapData)
-	assert(type(tset) is Tileset)
-	assert(type(bset) is Blockset)
+	assert(type(tprima) is Tileset)
+	assert(type(tsecunda) is Tileset)
+	assert(type(bprima) is Blockset)
+	assert(type(bsecunda) is Blockset)
+	assert(type(pprima) is list)
+	assert(type(psecunda) is list)
 	r1 = SDL2.SDL_CreateRGBSurfaceWithFormat(0, mapview[2] * 16,
 		mapview[3] * 16, 32, SDL2.SDL_PIXELFORMAT_RGBA8888)
 	r2 = SDL2.SDL_CreateRGBSurfaceWithFormat(0, mapview[2] * 16,
@@ -619,6 +624,15 @@ pals: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
 		x = mapview[0]
 		while x < mdata.w and y < mapview[2]:
 			blockid = mdata.readblock(x, y)
+			tset = tprima
+			bset = bprima
+			pals = pprima
+			bprima_sz = len(bprima.d) // 2
+			if blockid >= bprima_sz:
+				blockid -= bprima_sz
+				tset = tsecunda
+				bset = bsecunda
+				pals = psecunda
 			# each tile is a 64-long array of pixels
 			# each pixel is a 1-byte index of a palette 0-15
 			tilepels: List[bytes] = [
@@ -698,7 +712,7 @@ pals: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
 				red = int(tilepels[4][i]) << 4
 				green = int(tilepels[4][i]) << 4
 				blue = int(tilepels[4][i]) << 4
-				alpha = 0# if int(tilepels[4][i]) == 0 else 255
+				alpha = 0 if int(tilepels[4][i]) == 0 else 255
 				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
 					red | (green << 8) | (blue << 16) | (alpha << 24)
 				i += 1
@@ -710,7 +724,7 @@ pals: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
 				red = int(tilepels[5][i]) << 4
 				green = int(tilepels[5][i]) << 4
 				blue = int(tilepels[5][i]) << 4
-				alpha = 0# if int(tilepels[5][i]) == 0 else 255
+				alpha = 0 if int(tilepels[5][i]) == 0 else 255
 				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
 					red | (green << 8) | (blue << 16) | (alpha << 24)
 				i += 1
@@ -722,7 +736,7 @@ pals: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
 				red = int(tilepels[6][i]) << 4
 				green = int(tilepels[6][i]) << 4
 				blue = int(tilepels[6][i]) << 4
-				alpha = 0# if int(tilepels[6][i]) == 0 else 255
+				alpha = 0 if int(tilepels[6][i]) == 0 else 255
 				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
 					red | (green << 8) | (blue << 16) | (alpha << 24)
 				i += 1
@@ -734,7 +748,7 @@ pals: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
 				red = int(tilepels[7][i]) << 4
 				green = int(tilepels[7][i]) << 4
 				blue = int(tilepels[7][i]) << 4
-				alpha = 0# if int(tilepels[7][i]) == 0 else 255
+				alpha = 0 if int(tilepels[7][i]) == 0 else 255
 				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
 					red | (green << 8) | (blue << 16) | (alpha << 24)
 				i += 1
@@ -777,8 +791,9 @@ def mainloop(state : State):
 				state.onsplash = False
 				state.loadmap = True
 		if state.loadmap:
-			surf = render0(state.mapdata, state.tprima, state.bprima,
-				state.pprima, (0, 0, 640 // 16, 400 // 16))
+			surf = render0(state.mapdata, state.tprima, state.tsecunda,
+				state.bprima, state.bsecunda, state.pprima, state.psecunda,
+				(0, 0, 640 // 16, 400 // 16))
 			MAP_RECT = SDL2.SDL_Rect(0, 0, state.mapdata.w << 4,
 				state.mapdata.h << 4)
 			SDL2.SDL_BlitSurface(surf, MAP_RECT, state.fbuf, FBUF_RECT)
