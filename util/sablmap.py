@@ -7,19 +7,15 @@
 ##                       Released under BSD-0-Clause.                       ##
 ##############################################################################
 
-from typing import List, Literal, Tuple, Dict
+from typing import List, Tuple, Dict
 
 from PIL import Image as PILImage
 
 from ctypes import byref as Ref
-from ctypes import POINTER as Pointer
-from ctypes import c_uint32 as Uint32
-from ctypes import cast
 import sdl2.ext as SDL2Ext
 import os as OS
 import re as RegExp
 import sdl2 as SDL2
-import ini as INI
 import jascpal as JASC
 import chkascii as CheckASCII
 
@@ -152,6 +148,19 @@ class INI:
 			ret[cur_s][key] = val
 			i += 1
 		return ret
+	def serialise(self):
+		r: str = '\n'
+		for key in self.d['']:
+			r += key + '=' + self.d[''][key] + '\n'
+		r += '\n'
+		for section in self.d:
+			if section == '':
+				continue
+			r += '[' + section + ']\n'
+			for key in self.d[section]:
+				r += key + '=' + self.d[section][key] + '\n'
+			r += '\n'
+		return r
 
 class Tileset:
 	def __init__(self, fpath : str):
@@ -359,10 +368,10 @@ class Blockset:
 			block[1] |= (n << 4)
 			n = int(ini.readval(section, 'l0tl_xf'), 0)
 			assert(n >= 0 and n <= 1)
-			block[1] |= (n << 10)
+			block[1] |= (n << 2)
 			n = int(ini.readval(section, 'l0tl_yf'), 0)
 			assert(n >= 0 and n <= 1)
-			block[1] |= (n << 11)
+			block[1] |= (n << 3)
 			n = int(ini.readval(section, 'l0tr_tile'), 0)
 			assert(n >= 0 and n <= 0x3FF)
 			block[2] = n & 0xFF
@@ -372,10 +381,10 @@ class Blockset:
 			block[3] |= (n << 4)
 			n = int(ini.readval(section, 'l0tr_xf'), 0)
 			assert(n >= 0 and n <= 1)
-			block[3] |= (n << 10)
+			block[3] |= (n << 2)
 			n = int(ini.readval(section, 'l0tr_yf'), 0)
 			assert(n >= 0 and n <= 1)
-			block[3] |= (n << 11)
+			block[3] |= (n << 3)
 			n = int(ini.readval(section, 'l0bl_tile'), 0)
 			assert(n >= 0 and n <= 0x3FF)
 			block[4] = n & 0xFF
@@ -385,10 +394,10 @@ class Blockset:
 			block[5] |= (n << 4)
 			n = int(ini.readval(section, 'l0bl_xf'), 0)
 			assert(n >= 0 and n <= 1)
-			block[5] |= (n << 10)
+			block[5] |= (n << 2)
 			n = int(ini.readval(section, 'l0bl_yf'), 0)
 			assert(n >= 0 and n <= 1)
-			block[5] |= (n << 11)
+			block[5] |= (n << 3)
 			n = int(ini.readval(section, 'l0br_tile'), 0)
 			assert(n >= 0 and n <= 0x3FF)
 			block[6] = n & 0xFF
@@ -398,10 +407,10 @@ class Blockset:
 			block[7] |= (n << 4)
 			n = int(ini.readval(section, 'l0br_xf'), 0)
 			assert(n >= 0 and n <= 1)
-			block[7] |= (n << 10)
+			block[7] |= (n << 2)
 			n = int(ini.readval(section, 'l0br_yf'), 0)
 			assert(n >= 0 and n <= 1)
-			block[7] |= (n << 11)
+			block[7] |= (n << 3)
 			n = int(ini.readval(section, 'l1tl_tile'), 0)
 			assert(n >= 0 and n <= 0x3FF)
 			block[8] = n & 0xFF
@@ -411,10 +420,10 @@ class Blockset:
 			block[9] |= (n << 4)
 			n = int(ini.readval(section, 'l1tl_xf'), 0)
 			assert(n >= 0 and n <= 1)
-			block[9] |= (n << 10)
+			block[9] |= (n << 2)
 			n = int(ini.readval(section, 'l1tl_yf'), 0)
 			assert(n >= 0 and n <= 1)
-			block[9] |= (n << 11)
+			block[9] |= (n << 3)
 			n = int(ini.readval(section, 'l1tr_tile'), 0)
 			assert(n >= 0 and n <= 0x3FF)
 			block[10] = n & 0xFF
@@ -424,10 +433,10 @@ class Blockset:
 			block[11] |= (n << 4)
 			n = int(ini.readval(section, 'l1tr_xf'), 0)
 			assert(n >= 0 and n <= 1)
-			block[11] |= (n << 10)
+			block[11] |= (n << 2)
 			n = int(ini.readval(section, 'l1tr_yf'), 0)
 			assert(n >= 0 and n <= 1)
-			block[11] |= (n << 11)
+			block[11] |= (n << 3)
 			n = int(ini.readval(section, 'l1bl_tile'), 0)
 			assert(n >= 0 and n <= 0x3FF)
 			block[12] = n & 0xFF
@@ -437,10 +446,10 @@ class Blockset:
 			block[13] |= (n << 4)
 			n = int(ini.readval(section, 'l1bl_xf'), 0)
 			assert(n >= 0 and n <= 1)
-			block[13] |= (n << 10)
+			block[13] |= (n << 2)
 			n = int(ini.readval(section, 'l1bl_yf'), 0)
 			assert(n >= 0 and n <= 1)
-			block[13] |= (n << 11)
+			block[13] |= (n << 3)
 			n = int(ini.readval(section, 'l1br_tile'), 0)
 			assert(n >= 0 and n <= 0x3FF)
 			block[14] = n & 0xFF
@@ -450,10 +459,10 @@ class Blockset:
 			block[15] |= (n << 4)
 			n = int(ini.readval(section, 'l1br_xf'), 0)
 			assert(n >= 0 and n <= 1)
-			block[15] |= (n << 10)
+			block[15] |= (n << 2)
 			n = int(ini.readval(section, 'l1br_yf'), 0)
 			assert(n >= 0 and n <= 1)
-			block[15] |= (n << 11)
+			block[15] |= (n << 3)
 			behav = int(ini.readval(section, 'behav'), 0)
 			assert(behav >= 0 and behav <= 0xFFF)
 			block[16] = behav & 0xFF
