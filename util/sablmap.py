@@ -662,6 +662,24 @@ psecunda: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
 				# bottom right, layer 1
 				tset.readtile8(bset.readtile(blockid, 1, 3))
 			]
+			palidxs: List[int] = [
+				# top left, layer 0
+				bset.readpal(blockid, 0, 0),
+				# top right, layer 0
+				bset.readpal(blockid, 0, 1),
+				# bottom left, layer 0
+				bset.readpal(blockid, 0, 2),
+				# bottom right, layer 0
+				bset.readpal(blockid, 0, 3),
+				# top left, layer 1
+				bset.readpal(blockid, 1, 0),
+				# top right, layer 1
+				bset.readpal(blockid, 1, 1),
+				# bottom left, layer 1
+				bset.readpal(blockid, 1, 2),
+				# bottom right, layer 1
+				bset.readpal(blockid, 1, 3)
+			]
 			assert(len(tilepels[0]) == 64)
 			# LAYER 0
 			# copy top left tile
@@ -669,9 +687,12 @@ psecunda: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
 			pel_y = y * 16
 			i = 0
 			while i < 64:
-				red = pals[int(tilepels[0][i]) + 32][0]
-				green = pals[int(tilepels[0][i]) + 32][1]
-				blue = pals[int(tilepels[0][i]) + 32][2]
+				palidx = palidxs[0] * 16
+				subpalidx = int(tilepels[0][i])
+				col = pals[palidx + subpalidx]
+				red = col[0]
+				green = col[1]
+				blue = col[2]
 				alpha = 255
 				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
 					red | (green << 8) | (blue << 16) | (alpha << 24)
@@ -681,9 +702,12 @@ psecunda: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
 			pel_y = y * 16
 			i = 0
 			while i < 64:
-				red = pals[int(tilepels[1][i]) + 32][0]
-				green = pals[int(tilepels[1][i]) + 32][1]
-				blue = pals[int(tilepels[1][i]) + 32][2]
+				palidx = palidxs[1] * 16
+				subpalidx = int(tilepels[1][i])
+				col = pals[palidx + subpalidx]
+				red = col[0]
+				green = col[1]
+				blue = col[2]
 				alpha = 255
 				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
 					red | (green << 8) | (blue << 16) | (alpha << 24)
@@ -693,9 +717,12 @@ psecunda: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
 			pel_y = (y * 16) + 8
 			i = 0
 			while i < 64:
-				red = pals[int(tilepels[2][i]) + 32][0]
-				green = pals[int(tilepels[2][i]) + 32][1]
-				blue = pals[int(tilepels[2][i]) + 32][2]
+				palidx = palidxs[2] * 16
+				subpalidx = int(tilepels[2][i])
+				col = pals[palidx + subpalidx]
+				red = col[0]
+				green = col[1]
+				blue = col[2]
 				alpha = 255
 				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
 					red | (green << 8) | (blue << 16) | (alpha << 24)
@@ -705,9 +732,12 @@ psecunda: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
 			pel_y = (y * 16) + 8
 			i = 0
 			while i < 64:
-				red = pals[int(tilepels[3][i]) + 32][0]
-				green = pals[int(tilepels[3][i]) + 32][1]
-				blue = pals[int(tilepels[3][i]) + 32][2]
+				palidx = palidxs[3] * 16
+				subpalidx = int(tilepels[3][i])
+				col = pals[palidx + subpalidx]
+				red = col[0]
+				green = col[1]
+				blue = col[2]
 				alpha = 255
 				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
 					red | (green << 8) | (blue << 16) | (alpha << 24)
@@ -718,10 +748,13 @@ psecunda: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
 			pel_y = y * 16
 			i = 0
 			while i < 64:
-				red = int(tilepels[4][i]) << 4
-				green = int(tilepels[4][i]) << 4
-				blue = int(tilepels[4][i]) << 4
-				alpha = 0 if int(tilepels[4][i]) == 0 else 255
+				palidx = palidxs[4] * 16
+				subpalidx = int(tilepels[4][i])
+				col = pals[palidx + subpalidx]
+				red = col[0]
+				green = col[1]
+				blue = col[2]
+				alpha = 0 if subpalidx == 0 else 255
 				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
 					red | (green << 8) | (blue << 16) | (alpha << 24)
 				i += 1
@@ -730,10 +763,13 @@ psecunda: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
 			pel_y = y * 16
 			i = 0
 			while i < 64:
-				red = int(tilepels[5][i]) << 4
-				green = int(tilepels[5][i]) << 4
-				blue = int(tilepels[5][i]) << 4
-				alpha = 0 if int(tilepels[5][i]) == 0 else 255
+				palidx = palidxs[5] * 16
+				subpalidx = int(tilepels[5][i])
+				col = pals[palidx + subpalidx]
+				red = col[0]
+				green = col[1]
+				blue = col[2]
+				alpha = 0 if subpalidx == 0 else 255
 				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
 					red | (green << 8) | (blue << 16) | (alpha << 24)
 				i += 1
@@ -742,10 +778,13 @@ psecunda: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
 			pel_y = (y * 16) + 8
 			i = 0
 			while i < 64:
-				red = int(tilepels[6][i]) << 4
-				green = int(tilepels[6][i]) << 4
-				blue = int(tilepels[6][i]) << 4
-				alpha = 0 if int(tilepels[6][i]) == 0 else 255
+				palidx = palidxs[6] * 16
+				subpalidx = int(tilepels[6][i])
+				col = pals[palidx + subpalidx]
+				red = col[0]
+				green = col[1]
+				blue = col[2]
+				alpha = 0 if subpalidx == 0 else 255
 				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
 					red | (green << 8) | (blue << 16) | (alpha << 24)
 				i += 1
@@ -754,10 +793,13 @@ psecunda: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
 			pel_y = (y * 16) + 8
 			i = 0
 			while i < 64:
-				red = int(tilepels[7][i]) << 4
-				green = int(tilepels[7][i]) << 4
-				blue = int(tilepels[7][i]) << 4
-				alpha = 0 if int(tilepels[7][i]) == 0 else 255
+				palidx = palidxs[7] * 16
+				subpalidx = int(tilepels[7][i])
+				col = pals[palidx + subpalidx]
+				red = col[0]
+				green = col[1]
+				blue = col[2]
+				alpha = 0 if subpalidx == 0 else 255
 				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
 					red | (green << 8) | (blue << 16) | (alpha << 24)
 				i += 1
