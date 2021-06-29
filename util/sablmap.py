@@ -755,6 +755,7 @@ psecunda: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
 			x += 1
 		y += 1
 	rect = SDL2.SDL_Rect(0, 0, mapview[2], mapview[3])
+	# merge the tile layers together
 	SDL2.SDL_BlitSurface(r2, rect, r1, rect)
 	return r1
 
