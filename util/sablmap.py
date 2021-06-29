@@ -601,13 +601,19 @@ class State:
 # render1: colour tiles by palette, apply transparency
 #  -> this takes a 1D bytearray and colours onto an SDL_Surface
 
-def render0(mdata : MapData, tset : Tileset, bset : Blockset):
+def render0(mdata : MapData, tset : Tileset, bset : Blockset,
+pals: List[Tuple[int, int, int]]):
 	assert(type(mdata) is MapData)
 	assert(type(tset) is Tileset)
 	assert(type(bset) is Blockset)
-	r = SDL2.SDL_CreateRGBSurfaceWithFormat(0, mdata.w * 16, mdata.h * 16, 32,
+	r1 = SDL2.SDL_CreateRGBSurfaceWithFormat(0, mdata.w * 16, mdata.h * 16, 32,
 		SDL2.SDL_PIXELFORMAT_RGBA8888)
-	view = SDL2Ext.PixelView(r.contents)
+	r2 = SDL2.SDL_CreateRGBSurfaceWithFormat(0, mdata.w * 16, mdata.h * 16, 32,
+		SDL2.SDL_PIXELFORMAT_RGBA8888)
+	SDL2.SDL_SetSurfaceBlendMode(r1, SDL2.SDL_BLENDMODE_NONE)
+	SDL2.SDL_SetSurfaceBlendMode(r1, SDL2.SDL_BLENDMODE_BLEND)
+	view = SDL2Ext.PixelView(r1.contents)
+	view2 = SDL2Ext.PixelView(r2.contents)
 	y = 0
 	while y < mdata.h:
 		x = 0
@@ -633,56 +639,110 @@ def render0(mdata : MapData, tset : Tileset, bset : Blockset):
 				# bottom right, layer 1
 				tset.readtile8(bset.readtile(blockid, 1, 3))
 			]
-			# layer 0 gets written to r1
-			# layer 1 gets written to r2
 			assert(len(tilepels[0]) == 64)
+			# LAYER 0
 			# copy top left tile
 			pel_x = x * 16
 			pel_y = y * 16
-			pel_w = mdata.w * 16
 			i = 0
 			while i < 64:
-				gray = int(tilepels[0][i]) << 4
-				t = 0 if gray == 0 else 255
+				red = pals[int(tilepels[0][i]) + 32][0]
+				green = pals[int(tilepels[0][i]) + 32][1]
+				blue = pals[int(tilepels[0][i]) + 32][2]
+				alpha = 255
 				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
-					gray | (gray << 8) | (gray << 16) | (t << 24)
+					red | (green << 8) | (blue << 16) | (alpha << 24)
 				i += 1
 			# copy top right tile
 			pel_x = (x * 16) + 8
 			pel_y = y * 16
-			pel_w = mdata.w * 16
 			i = 0
 			while i < 64:
-				gray = int(tilepels[1][i]) << 4
-				t = 0 if gray == 0 else 255
+				red = pals[int(tilepels[1][i]) + 32][0]
+				green = pals[int(tilepels[1][i]) + 32][1]
+				blue = pals[int(tilepels[1][i]) + 32][2]
+				alpha = 255
 				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
-					gray | (gray << 8) | (gray << 16) | (t << 24)
+					red | (green << 8) | (blue << 16) | (alpha << 24)
 				i += 1
 			# copy bottom left tile
 			pel_x = x * 16
 			pel_y = (y * 16) + 8
-			pel_w = mdata.w * 16
 			i = 0
 			while i < 64:
-				gray = int(tilepels[2][i]) << 4
-				t = 0 if gray == 0 else 255
+				red = pals[int(tilepels[2][i]) + 32][0]
+				green = pals[int(tilepels[2][i]) + 32][1]
+				blue = pals[int(tilepels[2][i]) + 32][2]
+				alpha = 255
 				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
-					gray | (gray << 8) | (gray << 16) | (t << 24)
+					red | (green << 8) | (blue << 16) | (alpha << 24)
 				i += 1
 			# copy bottom right tile
 			pel_x = (x * 16) + 8
 			pel_y = (y * 16) + 8
-			pel_w = mdata.w * 16
 			i = 0
 			while i < 64:
-				gray = int(tilepels[3][i]) << 4
-				t = 0 if gray == 0 else 255
+				red = pals[int(tilepels[3][i]) + 32][0]
+				green = pals[int(tilepels[3][i]) + 32][1]
+				blue = pals[int(tilepels[3][i]) + 32][2]
+				alpha = 255
 				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
-					gray | (gray << 8) | (gray << 16) | (t << 24)
+					red | (green << 8) | (blue << 16) | (alpha << 24)
+				i += 1
+			# LAYER 1
+			# copy top left tile
+			pel_x = x * 16
+			pel_y = y * 16
+			i = 0
+			while i < 64:
+				red = int(tilepels[4][i]) << 4
+				green = int(tilepels[4][i]) << 4
+				blue = int(tilepels[4][i]) << 4
+				alpha = 0# if int(tilepels[4][i]) == 0 else 255
+				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
+					red | (green << 8) | (blue << 16) | (alpha << 24)
+				i += 1
+			# copy top right tile
+			pel_x = (x * 16) + 8
+			pel_y = y * 16
+			i = 0
+			while i < 64:
+				red = int(tilepels[5][i]) << 4
+				green = int(tilepels[5][i]) << 4
+				blue = int(tilepels[5][i]) << 4
+				alpha = 0# if int(tilepels[5][i]) == 0 else 255
+				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
+					red | (green << 8) | (blue << 16) | (alpha << 24)
+				i += 1
+			# copy bottom left tile
+			pel_x = x * 16
+			pel_y = (y * 16) + 8
+			i = 0
+			while i < 64:
+				red = int(tilepels[6][i]) << 4
+				green = int(tilepels[6][i]) << 4
+				blue = int(tilepels[6][i]) << 4
+				alpha = 0# if int(tilepels[6][i]) == 0 else 255
+				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
+					red | (green << 8) | (blue << 16) | (alpha << 24)
+				i += 1
+			# copy bottom right tile
+			pel_x = (x * 16) + 8
+			pel_y = (y * 16) + 8
+			i = 0
+			while i < 64:
+				red = int(tilepels[7][i]) << 4
+				green = int(tilepels[7][i]) << 4
+				blue = int(tilepels[7][i]) << 4
+				alpha = 0# if int(tilepels[7][i]) == 0 else 255
+				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
+					red | (green << 8) | (blue << 16) | (alpha << 24)
 				i += 1
 			x += 1
 		y += 1
-	return r
+	rect = SDL2.SDL_Rect(0, 0, mdata.w * 16, mdata.h * 16)
+	SDL2.SDL_BlitSurface(r2, rect, r1, rect)
+	return r1
 
 def pil2sdl(lis : List[Tuple]):
 	assert(type(lis) is list)
@@ -717,7 +777,8 @@ def mainloop(state : State):
 				state.onsplash = False
 				state.loadmap = True
 		if state.loadmap:
-			surf = render0(state.mapdata, state.tprima, state.bprima)
+			surf = render0(state.mapdata, state.tprima, state.bprima,
+				state.pprima)
 			MAP_RECT = SDL2.SDL_Rect(0, 0, state.mapdata.w << 4,
 				state.mapdata.h << 4)
 			SDL2.SDL_BlitSurface(surf, MAP_RECT, state.fbuf, FBUF_RECT)
