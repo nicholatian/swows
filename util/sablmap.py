@@ -636,7 +636,7 @@ psecunda: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
 			tset = tprima
 			bset = bprima
 			pals = pprima
-			bprima_sz = len(bprima.d) // 2
+			bprima_sz = len(bprima.d) // 18
 			if blockid >= bprima_sz:
 				blockid -= bprima_sz
 				tset = tsecunda
