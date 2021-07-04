@@ -162,9 +162,66 @@ class INI:
 			r += '\n'
 		return r
 
+class Col:
+	def __init__(self, r : int = 0, g : int = 0, b : int = 0, a : int = 0):
+		assert type(r) is int
+		assert r >= 0 and r <= 255
+		assert type(g) is int
+		assert g >= 0 and g <= 255
+		assert type(b) is int
+		assert b >= 0 and b <= 255
+		assert type(a) is int
+		assert a >= 0 and a <= 255
+		self.r = r
+		self.g = g
+		self.b = b
+		self.a = a
+	def rgb555(self):
+		r = (self.r >> 3) & 0x1F
+		g = (self.g >> 3) & 0x1F
+		b = (self.b >> 3) & 0x1F
+		return r | (g << 5) | (b << 10)
+
+class MapPalette:
+	def __init__(self, fpath : str):
+		assert type(fpath) is str
+		self.d = JASC.from_file(fpath, False)
+		assert len(self.d) == 256
+	def get16(self, idx : int):
+		assert type(idx) is int
+		assert idx >= 0 and idx <= 16
+		r: list[Col] = []
+		i = idx << 4 # * 16
+		end = i + 16
+		while i < end:
+			a = self.d[i]
+			r.append(Col(a[0], a[1], a[2], 255))
+			i += 1
+		return r
+	def get256(self):
+		r: list[Col] = []
+		i = 0
+		while i < 256:
+			a = self.d[i]
+			r.append(Col(a[0], a[1], a[2], 255))
+		return r
+	def get1of256(self, idx : int):
+		assert type(idx) is int
+		assert idx >= 0 and idx <= 255
+		a = self.d[idx]
+		return Col(a[0], a[1], a[2], 255)
+	def get1of16(self, lnum : int, idx : int):
+		assert type(lnum) is int
+		assert type(idx) is int
+		assert lnum >= 0 and lnum <= 15
+		assert idx >= 0 and idx <= 15
+		i = (lnum << 4) + idx
+		a = self.d[i]
+		return Col(a[0], a[1], a[2], 255)
+
 class Tileset:
 	def __init__(self, fpath : str):
-		assert(type(fpath) is str)
+		assert type(fpath) is str
 		tmp = PILImage.open(fpath)
 		tset = tmp.convert('L')
 		tmp.close()
@@ -187,11 +244,13 @@ class Tileset:
 				j += 1
 			i += 1
 		self.d = bytes(tdata)
-	def readtile(self, idx: int):
-		assert(type(idx) is int)
+	def readtile(self, idx : int):
+		assert type(idx) is int
 		return self.d[idx << 5:(idx << 5) + 32] # * 32
-	def readtile8(self, idx: int):
+	def readtile8(self, idx : int):
 		rpack = self.readtile(idx)
+		if len(rpack) == 0:
+			rpack = bytes(64)
 		r = bytearray(64)
 		i = 0
 		while i < 32:
@@ -199,6 +258,47 @@ class Tileset:
 			r[(i << 1) + 1] = (rpack[i] >> 4)
 			i += 1
 		return bytes(r)
+	def readtile8x(self, idx : int):
+		d = self.readtile8(idx)
+		r = bytearray(64)
+		i = 0
+		while i < 8:
+			a = bytearray(d[i << 3:(i << 3) + 8])
+			a.reverse()
+			r[i << 3:(i << 3) + 8] = a
+			i += 1
+		return bytes(r)
+	def readtile8y(self, idx : int):
+		d = self.readtile8(idx)
+		r = bytearray(64)
+		i = 0
+		j = 7
+		while i < 8:
+			r[i << 3:(i << 3) + 8] = bytearray(d[j << 3:(j << 3) + 8])
+			i += 1
+			j -= 1
+		return bytes(r)
+	def readtile8xy(self, idx : int):
+		d = self.readtile8(idx)
+		r = bytearray(64)
+		i = 0
+		j = 7
+		while i < 8:
+			a = bytearray(d[j << 3:(j << 3) + 8])
+			a.reverse()
+			r[i << 3:(i << 3) + 8] = a
+			i += 1
+			j -= 1
+		return bytes(r)
+	def readtile8r(self, idx : int, xflip : bool, yflip : bool):
+		assert type(idx) is int
+		assert type(xflip) is bool
+		assert type(yflip) is bool
+		if xflip:
+			if yflip: return self.readtile8xy(idx)
+			else: return self.readtile8x(idx)
+		elif yflip: return self.readtile8y(idx)
+		else: return self.readtile8(idx)
 	def readtiles(self, idxs : List[int]):
 		assert(type(idxs) is list)
 		idxs_sz = len(idxs)
@@ -276,7 +376,7 @@ class MapData:
 		assert(x >= 0)
 		assert(type(y) is int)
 		assert(y >= 0)
-		idx = (x * self.w) + y
+		idx = (y * self.w) + x
 		return (self.d[idx << 1]) | ((self.d[(idx << 1) + 1] & 0x3) << 8)
 	def readblocks(self, blocks : List[Tuple[int, int]]):
 		assert(type(blocks) is list)
@@ -300,7 +400,7 @@ class MapData:
 		assert(type(y) is int)
 		assert(y >= 0)
 		# go ahead and multiply idx by 2 and add 1, we only need hi byte
-		idx = (((x * self.w) + y) << 1) + 1
+		idx = (((y * self.w) + x) << 1) + 1
 		return self.d[idx] >> 2
 	def readmperms(self, mperms : List[Tuple[int, int]]):
 		assert(type(mperms) is list)
@@ -339,10 +439,10 @@ class MapData:
 
 class Blockset:
 	def __init__(self, ini : INI, tset : Tileset,
-	pal : List[Tuple[int, int, int]]):
+	pal : MapPalette):
 		assert(type(ini) is INI)
 		assert(type(tset) is Tileset)
-		assert(type(pal) is list)
+		assert(type(pal) is MapPalette)
 		count = int(ini.readgval('count'), 0)
 		# this is appended to to track duplicate sections
 		existing_nums: List[int] = []
@@ -356,7 +456,7 @@ class Blockset:
 		while i < sections_sz:
 			section = sections[i]
 			num = int(section, 0)
-			assert(num not in existing_nums)
+			assert num not in existing_nums
 			existing_nums.append(num)
 			block = bytearray(18)
 			n = int(ini.readval(section, 'l0tl_tile'), 0)
@@ -508,21 +608,6 @@ class Blockset:
 		assert(quadrant >= 0 and quadrant <= 3)
 		idx = (num * 18) + (layer * 8) + (quadrant * 2) + 1
 		return (self.d[idx] >> 4) & 0xF
-	def readpals(self, pals : List[Tuple[int, int, int]]):
-		assert(type(pals) is list)
-		pals_sz = len(pals)
-		r: List[int] = []
-		i = 0
-		while i < pals_sz:
-			pal = pals[i]
-			assert(type(pal) is tuple)
-			assert(len(pal) == 3)
-			num: int = pal[0]
-			layer: int = pal[1]
-			quadrant: int = pal[2]
-			r.append(self.readpal(num, layer, quadrant))
-			i += 1
-		return r
 	def readxflip(self, num : int, layer : int, quadrant : int):
 		assert(type(num) is int)
 		assert(num >= 0 and num <= 0x3FF)
@@ -531,11 +616,11 @@ class Blockset:
 		assert(type(quadrant) is int)
 		assert(quadrant >= 0 and quadrant <= 3)
 		idx = (num * 18) + (layer * 8) + (quadrant * 2) + 1
-		return (self.d[idx] >> 2) & 1
+		return True if (self.d[idx] >> 2) & 1 == 1 else False
 	def readxflips(self, flips : List[Tuple[int, int, int]]):
 		assert(type(flips) is list)
 		flips_sz = len(flips)
-		r: List[int] = []
+		r: List[bool] = []
 		i = 0
 		while i < flips_sz:
 			flip = flips[i]
@@ -555,11 +640,11 @@ class Blockset:
 		assert(type(quadrant) is int)
 		assert(quadrant >= 0 and quadrant <= 3)
 		idx = (num * 18) + (layer * 8) + (quadrant * 2) + 1
-		return (self.d[idx] >> 3) & 1
+		return True if (self.d[idx] >> 3) & 1 == 1 else False
 	def readyflips(self, flips : List[Tuple[int, int, int]]):
 		assert(type(flips) is list)
 		flips_sz = len(flips)
-		r: List[int] = []
+		r: List[bool] = []
 		i = 0
 		while i < flips_sz:
 			flip = flips[i]
@@ -575,16 +660,15 @@ class Blockset:
 class State:
 	def __init__(self, win : SDL2.SDL_Window, fbuf : SDL2.SDL_Surface,
 	mapdata : MapData, bprima : Blockset, bsecunda : Blockset,
-	tprima : Tileset, tsecunda : Tileset,
-	pprima : List[Tuple[int, int, int]],
-	psecunda : List[Tuple[int, int, int]]):
-		assert(type(mapdata) is MapData)
-		assert(type(bprima) is Blockset)
-		assert(type(bsecunda) is Blockset)
-		assert(type(tprima) is Tileset)
-		assert(type(tsecunda) is Tileset)
-		assert(type(pprima) is list)
-		assert(type(psecunda) is list)
+	tprima : Tileset, tsecunda : Tileset, pprima : MapPalette,
+	psecunda : MapPalette):
+		assert type(mapdata) is MapData
+		assert type(bprima) is Blockset
+		assert type(bsecunda) is Blockset
+		assert type(tprima) is Tileset
+		assert type(tsecunda) is Tileset
+		assert type(pprima) is MapPalette
+		assert type(psecunda) is MapPalette
 		self.win = win
 		self.fbuf = fbuf
 		self.mapdata = mapdata
@@ -611,15 +695,15 @@ class State:
 #  -> this takes a 1D bytearray and colours onto an SDL_Surface
 
 def render0(mdata : MapData, tprima : Tileset, tsecunda : Tileset,
-bprima : Blockset, bsecunda : Blockset, pprima : List[Tuple[int, int, int]],
-psecunda: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
+bprima : Blockset, bsecunda : Blockset, pprima : MapPalette,
+psecunda: MapPalette, mapview : Tuple[int, int, int, int]):
 	assert(type(mdata) is MapData)
 	assert(type(tprima) is Tileset)
 	assert(type(tsecunda) is Tileset)
 	assert(type(bprima) is Blockset)
 	assert(type(bsecunda) is Blockset)
-	assert(type(pprima) is list)
-	assert(type(psecunda) is list)
+	assert(type(pprima) is MapPalette)
+	assert(type(psecunda) is MapPalette)
 	r1 = SDL2.SDL_CreateRGBSurfaceWithFormat(0, mapview[2] * 16,
 		mapview[3] * 16, 32, SDL2.SDL_PIXELFORMAT_RGBA8888)
 	r2 = SDL2.SDL_CreateRGBSurfaceWithFormat(0, mapview[2] * 16,
@@ -646,21 +730,37 @@ psecunda: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
 			# each pixel is a 1-byte index of a palette 0-15
 			tilepels: List[bytes] = [
 				# top left, layer 0
-				tset.readtile8(bset.readtile(blockid, 0, 0)),
+				tset.readtile8r(bset.readtile(blockid, 0, 0),
+					bset.readxflip(blockid, 0, 0),
+					bset.readyflip(blockid, 0, 0)),
 				# top right, layer 0
-				tset.readtile8(bset.readtile(blockid, 0, 1)),
+				tset.readtile8r(bset.readtile(blockid, 0, 1),
+					bset.readxflip(blockid, 0, 1),
+					bset.readyflip(blockid, 0, 1)),
 				# bottom left, layer 0
-				tset.readtile8(bset.readtile(blockid, 0, 2)),
+				tset.readtile8r(bset.readtile(blockid, 0, 2),
+					bset.readxflip(blockid, 0, 2),
+					bset.readyflip(blockid, 0, 2)),
 				# bottom right, layer 0
-				tset.readtile8(bset.readtile(blockid, 0, 3)),
+				tset.readtile8r(bset.readtile(blockid, 0, 3),
+					bset.readxflip(blockid, 0, 3),
+					bset.readyflip(blockid, 0, 3)),
 				# top left, layer 1
-				tset.readtile8(bset.readtile(blockid, 1, 0)),
+				tset.readtile8r(bset.readtile(blockid, 1, 0),
+					bset.readxflip(blockid, 1, 0),
+					bset.readyflip(blockid, 1, 0)),
 				# top right, layer 1
-				tset.readtile8(bset.readtile(blockid, 1, 1)),
+				tset.readtile8r(bset.readtile(blockid, 1, 1),
+					bset.readxflip(blockid, 1, 1),
+					bset.readyflip(blockid, 1, 1)),
 				# bottom left, layer 1
-				tset.readtile8(bset.readtile(blockid, 1, 2)),
+				tset.readtile8r(bset.readtile(blockid, 1, 2),
+					bset.readxflip(blockid, 1, 2),
+					bset.readyflip(blockid, 1, 2)),
 				# bottom right, layer 1
-				tset.readtile8(bset.readtile(blockid, 1, 3))
+				tset.readtile8r(bset.readtile(blockid, 1, 3),
+					bset.readxflip(blockid, 1, 3),
+					bset.readyflip(blockid, 1, 3))
 			]
 			palidxs: List[int] = [
 				# top left, layer 0
@@ -680,67 +780,42 @@ psecunda: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
 				# bottom right, layer 1
 				bset.readpal(blockid, 1, 3)
 			]
-			assert(len(tilepels[0]) == 64)
 			# LAYER 0
 			# copy top left tile
 			pel_x = x * 16
 			pel_y = y * 16
 			i = 0
 			while i < 64:
-				palidx = palidxs[0] * 16
-				subpalidx = int(tilepels[0][i])
-				col = pals[palidx + subpalidx]
-				red = col[0]
-				green = col[1]
-				blue = col[2]
-				alpha = 255
+				col = pals.get1of16(palidxs[0], int(tilepels[0][i]))
 				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
-					red | (green << 8) | (blue << 16) | (alpha << 24)
+					col.r | (col.g << 8) | (col.b << 16) | 0xFF000000
 				i += 1
 			# copy top right tile
 			pel_x = (x * 16) + 8
 			pel_y = y * 16
 			i = 0
 			while i < 64:
-				palidx = palidxs[1] * 16
-				subpalidx = int(tilepels[1][i])
-				col = pals[palidx + subpalidx]
-				red = col[0]
-				green = col[1]
-				blue = col[2]
-				alpha = 255
+				col = pals.get1of16(palidxs[1], int(tilepels[1][i]))
 				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
-					red | (green << 8) | (blue << 16) | (alpha << 24)
+					col.r | (col.g << 8) | (col.b << 16) | 0xFF000000
 				i += 1
 			# copy bottom left tile
 			pel_x = x * 16
 			pel_y = (y * 16) + 8
 			i = 0
 			while i < 64:
-				palidx = palidxs[2] * 16
-				subpalidx = int(tilepels[2][i])
-				col = pals[palidx + subpalidx]
-				red = col[0]
-				green = col[1]
-				blue = col[2]
-				alpha = 255
+				col = pals.get1of16(palidxs[2], int(tilepels[2][i]))
 				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
-					red | (green << 8) | (blue << 16) | (alpha << 24)
+					col.r | (col.g << 8) | (col.b << 16) | 0xFF000000
 				i += 1
 			# copy bottom right tile
 			pel_x = (x * 16) + 8
 			pel_y = (y * 16) + 8
 			i = 0
 			while i < 64:
-				palidx = palidxs[3] * 16
-				subpalidx = int(tilepels[3][i])
-				col = pals[palidx + subpalidx]
-				red = col[0]
-				green = col[1]
-				blue = col[2]
-				alpha = 255
+				col = pals.get1of16(palidxs[3], int(tilepels[3][i]))
 				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
-					red | (green << 8) | (blue << 16) | (alpha << 24)
+					col.r | (col.g << 8) | (col.b << 16) | 0xFF000000
 				i += 1
 			# LAYER 1
 			# copy top left tile
@@ -748,60 +823,44 @@ psecunda: List[Tuple[int, int, int]], mapview : Tuple[int, int, int, int]):
 			pel_y = y * 16
 			i = 0
 			while i < 64:
-				palidx = palidxs[4] * 16
 				subpalidx = int(tilepels[4][i])
-				col = pals[palidx + subpalidx]
-				red = col[0]
-				green = col[1]
-				blue = col[2]
+				col = pals.get1of16(palidxs[4], subpalidx)
 				alpha = 0 if subpalidx == 0 else 255
 				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
-					red | (green << 8) | (blue << 16) | (alpha << 24)
+					col.r | (col.g << 8) | (col.b << 16) | (alpha << 24)
 				i += 1
 			# copy top right tile
 			pel_x = (x * 16) + 8
 			pel_y = y * 16
 			i = 0
 			while i < 64:
-				palidx = palidxs[5] * 16
 				subpalidx = int(tilepels[5][i])
-				col = pals[palidx + subpalidx]
-				red = col[0]
-				green = col[1]
-				blue = col[2]
+				col = pals.get1of16(palidxs[5], subpalidx)
 				alpha = 0 if subpalidx == 0 else 255
 				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
-					red | (green << 8) | (blue << 16) | (alpha << 24)
+					col.r | (col.g << 8) | (col.b << 16) | (alpha << 24)
 				i += 1
 			# copy bottom left tile
 			pel_x = x * 16
 			pel_y = (y * 16) + 8
 			i = 0
 			while i < 64:
-				palidx = palidxs[6] * 16
 				subpalidx = int(tilepels[6][i])
-				col = pals[palidx + subpalidx]
-				red = col[0]
-				green = col[1]
-				blue = col[2]
+				col = pals.get1of16(palidxs[6], subpalidx)
 				alpha = 0 if subpalidx == 0 else 255
 				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
-					red | (green << 8) | (blue << 16) | (alpha << 24)
+					col.r | (col.g << 8) | (col.b << 16) | (alpha << 24)
 				i += 1
 			# copy bottom right tile
 			pel_x = (x * 16) + 8
 			pel_y = (y * 16) + 8
 			i = 0
 			while i < 64:
-				palidx = palidxs[7] * 16
 				subpalidx = int(tilepels[7][i])
-				col = pals[palidx + subpalidx]
-				red = col[0]
-				green = col[1]
-				blue = col[2]
+				col = pals.get1of16(palidxs[7], subpalidx)
 				alpha = 0 if subpalidx == 0 else 255
 				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
-					red | (green << 8) | (blue << 16) | (alpha << 24)
+					col.r | (col.g << 8) | (col.b << 16) | (alpha << 24)
 				i += 1
 			x += 1
 		y += 1
@@ -912,11 +971,11 @@ def main(args : List[str]):
 	bdir = OS.path.join(basedir, 'blockset')
 	nprima = ini.readgval('prima')
 	tprima = Tileset(OS.path.join(tdir, nprima + '.4tn.il.png'))
-	pprima = JASC.from_file(OS.path.join(tdir, nprima + '.jasc'), False)
+	pprima = MapPalette(OS.path.join(tdir, nprima + '.jasc'))
 	bprima = Blockset(INI(OS.path.join(bdir, nprima + '.ini')), tprima, pprima)
 	nsecunda = ini.readgval('secunda')
 	tsecunda = Tileset(OS.path.join(tdir, nsecunda + '.4tn.il.png'))
-	psecunda = JASC.from_file(OS.path.join(tdir, nsecunda + '.jasc'), False)
+	psecunda = MapPalette(OS.path.join(tdir, nsecunda + '.jasc'))
 	bsecunda = Blockset(INI(OS.path.join(bdir, nsecunda + '.ini')),
 		tsecunda, psecunda)
 	state = State(win, fbuf, mdata, bprima, bsecunda, tprima, tsecunda,
