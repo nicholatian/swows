@@ -186,7 +186,6 @@ class MapPalette:
 	def __init__(self, fpath : str):
 		assert type(fpath) is str
 		self.d = JASC.from_file(fpath, False)
-		print(self.d[32], self.d[33], self.d[34], self.d[35])
 		assert len(self.d) == 256
 	def get16(self, idx : int):
 		assert type(idx) is int
@@ -871,6 +870,8 @@ def mainloop(state : State):
 	while SDL2.SDL_PollEvent(Ref(e)) != 0:
 		if e.type == SDL2.SDL_QUIT:
 			return True
+		elif e.type == SDL2.SDL_KEYUP and not state.onsplash:
+			sym = e.key.keysym.sym
 		elif e.type == SDL2.SDL_MOUSEBUTTONUP:
 			if state.onsplash:
 				imag = PILImage.open(OS.path.join('etc', 'working.png'))
@@ -893,7 +894,6 @@ def mainloop(state : State):
 			state.req_update()
 			state.loadmap = False
 	if state.need_update():
-		print('Updating...')
 		SDL2.SDL_BlitSurface(state.fbuf, None,
 			SDL2.SDL_GetWindowSurface(state.win), None)
 		SDL2.SDL_UpdateWindowSurface(state.win)
