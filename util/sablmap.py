@@ -361,7 +361,7 @@ class Tileset:
 			pixel = image.getpixel((x, y)) >> 4
 			data[i] = pixel
 			i += 1
-		return bytes(data)
+		return data
 	def __getitem__(self, idx : 'tuple[int, int] | int'):
 		assert type(idx) is 'tuple[int, int]' or type(idx) is int
 		if type(idx) is 'tuple[int, int]':
@@ -385,3 +385,106 @@ class Tileset:
 		self._d[i] = val
 	def __len__(self):
 		return self._len
+
+class MapBlock:
+	def __init__(self, data : int):
+		assert type(data) is int
+		assert data >= 0 and data < 65536
+		self.block = data & 0x3FF
+		self.move = (data >> 10) & 0x3F
+
+class MapData:
+	def __init__(self, owbtext : str, owmtext : str, w : int, h : int):
+		MapData._marshal(owbtext, owmtext, w, h)
+		self._d = MapData._parse(owbtext, owmtext, w, h)
+		self._w = w
+		self._h = h
+	@staticmethod
+	def _marshal(owbtext : str, owmtext : str, w : int, h : int):
+		assert type(owbtext) is str
+		assert type(owmtext) is str
+		assert type(w) is int
+		assert w > 0 and w < 65536
+		assert type(h) is int
+		assert h > 0 and h < 65536
+		MapData._marshal_ow(owbtext, w, h, True)
+		MapData._marshal_ow(owmtext, w, h, False)
+	@staticmethod
+	def _marshal_ow(text : str, w : int, h : int, is_blocks : bool):
+		assert type(text) is str
+		assert type(is_blocks) is bool
+		nums = WSPACE_EXPR.sub(text.replace('\n', ' '), ' ').split(' ')
+		count = w * h
+		assert len(nums) == count
+		i = 0
+		while i < count:
+			n = int(nums[i], 16)
+			assert n >= 0
+			if is_blocks: assert n <= 0x3FF
+			else: assert n <= 0x3F
+			i += 1
+	@staticmethod
+	def _parse(owbtext : str, owmtext : str, w : int, h : int):
+		owbs = WSPACE_EXPR.sub(owbtext.replace('\n', ' '), ' ').split(' ')
+		owms = WSPACE_EXPR.sub(owmtext.replace('\n', ' '), ' ').split(' ')
+		count = w * h
+		# << 1 is * 2
+		ret = bytearray(count << 1)
+		i = 0
+		while i < count:
+			# store this in little endian, so LSB first
+			# << 1 is * 2
+			owb = int(owbs[i], 16)
+			ret[i << 1] = owb & 0xFF
+			ret[(i << 1) + 1] = (owb >> 8) | (int(owms[i], 16) << 2)
+			i += 1
+		return ret
+	def __getitem__(self, idx : 'tuple[int, int]'):
+		assert type(idx) is 'tuple[int, int]'
+		assert idx[0] >= 0 and idx[0] < self._w
+		assert idx[1] >= 0 and idx[1] < self._h
+		i = (idx[1] * self._h) + idx[0]
+		return MapBlock(self._d[i])
+	def __setitem__(self, idx : 'tuple[int, int]', val : MapBlock):
+		assert type(idx) is 'tuple[int, int]'
+		assert idx[0] >= 0 and idx[0] < self._w
+		assert idx[1] >= 0 and idx[1] < self._h
+		assert type(val) is MapBlock
+		i = (idx[1] * self._h) + idx[0]
+		n = (val.block & 0x3FF) | ((val.move & 0x3F) << 10)
+		self._d[i] = MapBlock(n)
+
+BLOCK_INI_KEYS = [
+	'l0tl_tile',
+	'l0tl_pal',
+	'l0tl_xf',
+	'l0tl_yf',
+	'l0tr_tile',
+	'l0tr_pal',
+	'l0tr_xf',
+	'l0tr_yf',
+	'l0bl_tile',
+	'l0bl_pal',
+	'l0bl_xf',
+	'l0bl_yf',
+	'l0br_tile',
+	'l0br_pal',
+	'l0br_xf',
+	'l0br_yf',
+	'l1tl_tile',
+	'l1tl_pal',
+	'l1tl_xf',
+	'l1tl_yf',
+	'l1tr_tile',
+	'l1tr_pal',
+	'l1tr_xf',
+	'l1tr_yf',
+	'l1bl_tile',
+	'l1bl_pal',
+	'l1bl_xf',
+	'l1bl_yf',
+	'l1br_tile',
+	'l1br_pal',
+	'l1br_xf',
+	'l1br_yf'
+]
