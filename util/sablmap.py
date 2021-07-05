@@ -186,6 +186,7 @@ class MapPalette:
 	def __init__(self, fpath : str):
 		assert type(fpath) is str
 		self.d = JASC.from_file(fpath, False)
+		print(self.d[32], self.d[33], self.d[34], self.d[35])
 		assert len(self.d) == 256
 	def get16(self, idx : int):
 		assert type(idx) is int
@@ -438,11 +439,9 @@ class MapData:
 		return r
 
 class Blockset:
-	def __init__(self, ini : INI, tset : Tileset,
-	pal : MapPalette):
+	def __init__(self, ini : INI, tset : Tileset):
 		assert(type(ini) is INI)
 		assert(type(tset) is Tileset)
-		assert(type(pal) is MapPalette)
 		count = int(ini.readgval('count'), 0)
 		# this is appended to to track duplicate sections
 		existing_nums: List[int] = []
@@ -708,60 +707,38 @@ psecunda: MapPalette, mapview : Tuple[int, int, int, int]):
 		mapview[3] * 16, 32, SDL2.SDL_PIXELFORMAT_RGBA8888)
 	r2 = SDL2.SDL_CreateRGBSurfaceWithFormat(0, mapview[2] * 16,
 		mapview[3] * 16, 32, SDL2.SDL_PIXELFORMAT_RGBA8888)
-	SDL2.SDL_SetSurfaceBlendMode(r1, SDL2.SDL_BLENDMODE_NONE)
 	SDL2.SDL_SetSurfaceBlendMode(r1, SDL2.SDL_BLENDMODE_BLEND)
+	SDL2.SDL_SetSurfaceBlendMode(r2, SDL2.SDL_BLENDMODE_BLEND)
 	view = SDL2Ext.PixelView(r1.contents)
 	view2 = SDL2Ext.PixelView(r2.contents)
+	tprima_sz = len(tprima.d) // 32
 	y = mapview[1]
 	while y < mdata.h and y < mapview[3]:
 		x = mapview[0]
 		while x < mdata.w and y < mapview[2]:
 			blockid = mdata.readblock(x, y)
-			tset = tprima
 			bset = bprima
-			pals = pprima
 			bprima_sz = len(bprima.d) // 18
 			if blockid >= bprima_sz:
 				blockid -= bprima_sz
-				tset = tsecunda
 				bset = bsecunda
-				pals = psecunda
 			# each tile is a 64-long array of pixels
 			# each pixel is a 1-byte index of a palette 0-15
-			tilepels: List[bytes] = [
-				# top left, layer 0
-				tset.readtile8r(bset.readtile(blockid, 0, 0),
-					bset.readxflip(blockid, 0, 0),
-					bset.readyflip(blockid, 0, 0)),
-				# top right, layer 0
-				tset.readtile8r(bset.readtile(blockid, 0, 1),
-					bset.readxflip(blockid, 0, 1),
-					bset.readyflip(blockid, 0, 1)),
-				# bottom left, layer 0
-				tset.readtile8r(bset.readtile(blockid, 0, 2),
-					bset.readxflip(blockid, 0, 2),
-					bset.readyflip(blockid, 0, 2)),
-				# bottom right, layer 0
-				tset.readtile8r(bset.readtile(blockid, 0, 3),
-					bset.readxflip(blockid, 0, 3),
-					bset.readyflip(blockid, 0, 3)),
-				# top left, layer 1
-				tset.readtile8r(bset.readtile(blockid, 1, 0),
-					bset.readxflip(blockid, 1, 0),
-					bset.readyflip(blockid, 1, 0)),
-				# top right, layer 1
-				tset.readtile8r(bset.readtile(blockid, 1, 1),
-					bset.readxflip(blockid, 1, 1),
-					bset.readyflip(blockid, 1, 1)),
-				# bottom left, layer 1
-				tset.readtile8r(bset.readtile(blockid, 1, 2),
-					bset.readxflip(blockid, 1, 2),
-					bset.readyflip(blockid, 1, 2)),
-				# bottom right, layer 1
-				tset.readtile8r(bset.readtile(blockid, 1, 3),
-					bset.readxflip(blockid, 1, 3),
-					bset.readyflip(blockid, 1, 3))
-			]
+			tilepels: List[bytes] = []
+			i = 0
+			while i < 8:
+				tnum = bset.readtile(blockid, i >> 2, i & 3)
+				tile = None
+				if tnum >= tprima_sz:
+					tile = tsecunda.readtile8r(tnum - tprima_sz,
+						bset.readxflip(blockid, i >> 2, i & 3),
+						bset.readyflip(blockid, i >> 2, i & 3))
+				else:
+					tile = tprima.readtile8r(tnum,
+						bset.readxflip(blockid, i >> 2, i & 3),
+						bset.readyflip(blockid, i >> 2, i & 3))
+				tilepels.append(tile)
+				i += 1
 			palidxs: List[int] = [
 				# top left, layer 0
 				bset.readpal(blockid, 0, 0),
@@ -786,36 +763,40 @@ psecunda: MapPalette, mapview : Tuple[int, int, int, int]):
 			pel_y = y * 16
 			i = 0
 			while i < 64:
-				col = pals.get1of16(palidxs[0], int(tilepels[0][i]))
+				pal = pprima if palidxs[0] < 6 else psecunda
+				col = pal.get1of16(palidxs[0], int(tilepels[0][i]))
 				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
-					col.r | (col.g << 8) | (col.b << 16) | 0xFF000000
+					col.b | (col.g << 8) | (col.r << 16) | 0xFF000000
 				i += 1
 			# copy top right tile
 			pel_x = (x * 16) + 8
 			pel_y = y * 16
 			i = 0
 			while i < 64:
-				col = pals.get1of16(palidxs[1], int(tilepels[1][i]))
+				pal = pprima if palidxs[1] < 6 else psecunda
+				col = pal.get1of16(palidxs[1], int(tilepels[1][i]))
 				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
-					col.r | (col.g << 8) | (col.b << 16) | 0xFF000000
+					col.b | (col.g << 8) | (col.r << 16) | 0xFF000000
 				i += 1
 			# copy bottom left tile
 			pel_x = x * 16
 			pel_y = (y * 16) + 8
 			i = 0
 			while i < 64:
-				col = pals.get1of16(palidxs[2], int(tilepels[2][i]))
+				pal = pprima if palidxs[2] < 6 else psecunda
+				col = pal.get1of16(palidxs[2], int(tilepels[2][i]))
 				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
-					col.r | (col.g << 8) | (col.b << 16) | 0xFF000000
+					col.b | (col.g << 8) | (col.r << 16) | 0xFF000000
 				i += 1
 			# copy bottom right tile
 			pel_x = (x * 16) + 8
 			pel_y = (y * 16) + 8
 			i = 0
 			while i < 64:
-				col = pals.get1of16(palidxs[3], int(tilepels[3][i]))
+				pal = pprima if palidxs[3] < 6 else psecunda
+				col = pal.get1of16(palidxs[3], int(tilepels[3][i]))
 				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
-					col.r | (col.g << 8) | (col.b << 16) | 0xFF000000
+					col.b | (col.g << 8) | (col.r << 16) | 0xFF000000
 				i += 1
 			# LAYER 1
 			# copy top left tile
@@ -824,10 +805,11 @@ psecunda: MapPalette, mapview : Tuple[int, int, int, int]):
 			i = 0
 			while i < 64:
 				subpalidx = int(tilepels[4][i])
-				col = pals.get1of16(palidxs[4], subpalidx)
+				pal = pprima if palidxs[4] < 6 else psecunda
+				col = pal.get1of16(palidxs[4], subpalidx)
 				alpha = 0 if subpalidx == 0 else 255
 				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
-					col.r | (col.g << 8) | (col.b << 16) | (alpha << 24)
+					col.b | (col.g << 8) | (col.r << 16) | (alpha << 24)
 				i += 1
 			# copy top right tile
 			pel_x = (x * 16) + 8
@@ -835,10 +817,11 @@ psecunda: MapPalette, mapview : Tuple[int, int, int, int]):
 			i = 0
 			while i < 64:
 				subpalidx = int(tilepels[5][i])
-				col = pals.get1of16(palidxs[5], subpalidx)
+				pal = pprima if palidxs[5] < 6 else psecunda
+				col = pal.get1of16(palidxs[5], subpalidx)
 				alpha = 0 if subpalidx == 0 else 255
 				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
-					col.r | (col.g << 8) | (col.b << 16) | (alpha << 24)
+					col.b | (col.g << 8) | (col.r << 16) | (alpha << 24)
 				i += 1
 			# copy bottom left tile
 			pel_x = x * 16
@@ -846,10 +829,11 @@ psecunda: MapPalette, mapview : Tuple[int, int, int, int]):
 			i = 0
 			while i < 64:
 				subpalidx = int(tilepels[6][i])
-				col = pals.get1of16(palidxs[6], subpalidx)
+				pal = pprima if palidxs[6] < 6 else psecunda
+				col = pal.get1of16(palidxs[6], subpalidx)
 				alpha = 0 if subpalidx == 0 else 255
 				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
-					col.r | (col.g << 8) | (col.b << 16) | (alpha << 24)
+					col.b | (col.g << 8) | (col.r << 16) | (alpha << 24)
 				i += 1
 			# copy bottom right tile
 			pel_x = (x * 16) + 8
@@ -857,17 +841,15 @@ psecunda: MapPalette, mapview : Tuple[int, int, int, int]):
 			i = 0
 			while i < 64:
 				subpalidx = int(tilepels[7][i])
-				col = pals.get1of16(palidxs[7], subpalidx)
+				pal = pprima if palidxs[7] < 6 else psecunda
+				col = pal.get1of16(palidxs[7], subpalidx)
 				alpha = 0 if subpalidx == 0 else 255
 				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
-					col.r | (col.g << 8) | (col.b << 16) | (alpha << 24)
+					col.b | (col.g << 8) | (col.r << 16) | (alpha << 24)
 				i += 1
 			x += 1
 		y += 1
-	rect = SDL2.SDL_Rect(0, 0, mapview[2], mapview[3])
-	# merge the tile layers together
-	SDL2.SDL_BlitSurface(r2, rect, r1, rect)
-	return r1
+	return (r1, r2)
 
 def pil2sdl(lis : List[Tuple]):
 	assert(type(lis) is list)
@@ -902,12 +884,12 @@ def mainloop(state : State):
 				state.onsplash = False
 				state.loadmap = True
 		if state.loadmap:
-			surf = render0(state.mapdata, state.tprima, state.tsecunda,
+			surfs = render0(state.mapdata, state.tprima, state.tsecunda,
 				state.bprima, state.bsecunda, state.pprima, state.psecunda,
-				(0, 0, 640 // 16, 400 // 16))
-			MAP_RECT = SDL2.SDL_Rect(0, 0, state.mapdata.w << 4,
-				state.mapdata.h << 4)
-			SDL2.SDL_BlitSurface(surf, MAP_RECT, state.fbuf, FBUF_RECT)
+				(0, 0, MAPVIEW_W // 16, MAPVIEW_H // 16))
+			MAP_RECT = SDL2.SDL_Rect(0, 0, MAPVIEW_W, MAPVIEW_H)
+			SDL2.SDL_BlitSurface(surfs[0], MAP_RECT, state.fbuf, FBUF_RECT)
+			SDL2.SDL_BlitSurface(surfs[1], MAP_RECT, state.fbuf, FBUF_RECT)
 			state.req_update()
 			state.loadmap = False
 	if state.need_update():
@@ -972,12 +954,12 @@ def main(args : List[str]):
 	nprima = ini.readgval('prima')
 	tprima = Tileset(OS.path.join(tdir, nprima + '.4tn.il.png'))
 	pprima = MapPalette(OS.path.join(tdir, nprima + '.jasc'))
-	bprima = Blockset(INI(OS.path.join(bdir, nprima + '.ini')), tprima, pprima)
+	bprima = Blockset(INI(OS.path.join(bdir, nprima + '.ini')), tprima)
 	nsecunda = ini.readgval('secunda')
 	tsecunda = Tileset(OS.path.join(tdir, nsecunda + '.4tn.il.png'))
 	psecunda = MapPalette(OS.path.join(tdir, nsecunda + '.jasc'))
 	bsecunda = Blockset(INI(OS.path.join(bdir, nsecunda + '.ini')),
-		tsecunda, psecunda)
+		tsecunda)
 	state = State(win, fbuf, mdata, bprima, bsecunda, tprima, tsecunda,
 		pprima, psecunda)
 	imag = PILImage.open(OS.path.join('etc', 'startup.png'))
