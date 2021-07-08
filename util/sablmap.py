@@ -12,22 +12,23 @@ from typing import List, Tuple, Dict
 from PIL import Image as PILImage
 
 from ctypes import byref as Ref
+import sdl2.ext as SDL2Ext
 import os as OS
 import re as RegExp
 import sdl2 as SDL2
+import jascpal as JASC
+import chkascii as CheckASCII
 
 MAPVIEW_W = 640
 MAPVIEW_H = 400
 
-BLOCKVIEW_W = 256
-BLOCKVIEW_H = 400
+BLOCVIEW_W = 256
+BLOCVIEW_H = 400
 
 FRAME_W = 960
 FRAME_H = 416
 
-FRAME_RECT = SDL2.SDL_Rect(0, 0, FRAME_W, FRAME_H)
-MAPVIEW_RECT = SDL2.SDL_Rect(0, 0, MAPVIEW_W, MAPVIEW_H)
-BLOCKVIEW_RECT = SDL2.SDL_Rect(0, 0, BLOCKVIEW_W, BLOCKVIEW_H)
+FBUF_RECT = SDL2.SDL_Rect(0, 0, FRAME_W, FRAME_H)
 
 WSPACE_EXPR = RegExp.compile('[ \t\v\f\r]+')
 
@@ -50,40 +51,79 @@ stdout nor stderr. Otherwise, it will print status info updates as it
 works to stderr. stdin and stdout are never used.
 '''
 
-def is_ascii(text : 'str | bytes | bytearray', allow_nul : bool = False):
-	assert type(allow_nul) is bool
-	assert type(text) is str or type(text) is bytes or type(text) is bytearray
-	if type(text) is str:
-		text = text.encode('utf-8')
-	elif type(text) is bytearray:
-		text = bytes(text)
-	# now text is certainly bytes
-	text_sz = len(text)
-	i = 0
-	while i < text_sz:
-		if text[i] > 127: return False
-		if not allow_nul and text[i] == 0: return False
-		i += 1
-	return True
-
-class Ini:
-	def __init__(self, text : str):
-		Ini._marshal_init(text)
-		self._d = Ini._parse(text)
-		Ini.marshal()
-	@staticmethod
-	def _parse(text : str):
-		r: Dict[str, Dict[str, str]] = {'': {}}
+class INI:
+	def __init__(self, fpath : str):
+		assert(type(fpath) is str)
+		f = open(fpath, 'rb')
+		t = f.read()
+		f.close()
+		t_sz = len(t)
+		assert(CheckASCII.bad_ascii(t, t_sz, False) == t_sz)
+		self.d = self._parse(t.decode('utf-8'))
+	def _getbool(self, section : str, key : str):
+		input: str = self.d[section][key]
+		if input == 'true' or input == 'True' or input == 'TRUE' or \
+		input == 'y' or input == 'Y' or input == 'yes' or input == 'Yes' or \
+		input == 'YES' or input == 'on' or input == 'On' or input == 'ON':
+			return 1
+		elif input == 'false' or input == 'False' or input == 'FALSE' or \
+		input == 'n' or input == 'N' or input == 'no' or input == 'No' or \
+		input == 'NO' or input == 'off' or input == 'Off' or input == 'OFF':
+			return 0
+		else: return -1
+	def readval(self, section : str, key : str):
+		assert(type(section) is str)
+		assert(section != '')
+		assert(type(key) is str)
+		assert(key != '')
+		assert(section in self.d)
+		assert(key in self.d[section])
+		r = self._getbool(section, key)
+		if r == -1: return self.d[section][key]
+		else: return True if r == 1 else False
+	def enumsections(self):
+		r: List[str] = []
+		for section in self.d:
+			if section == '':
+				continue
+			r.append(section)
+		return r
+	def readgval(self, key : str):
+		assert(type(key) is str)
+		assert(key != '')
+		assert(key in self.d[''])
+		r = self._getbool('', key)
+		if r == -1: return self.d[''][key]
+		else: return True if r == 1 else False
+	def writeval(self, section : str, key : str, val : str):
+		assert(type(section) is str)
+		assert(section != '')
+		assert(type(key) is str)
+		assert(key != '')
+		assert(type(val) is str)
+		if section not in self.d:
+			self.d[section] = {}
+		self.d[section][key] = val
+	def writegval(self, key : str, val : str):
+		assert(type(key) is str)
+		assert(key != '')
+		self.d[''][key] = val
+	def _parse(self, t : str):
+		assert(type(t) is str)
+		ret: Dict[str, Dict[str, str]] = {'': {}}
 		cur_s = '' # Empty string is the global section
-		lines = text.splitlines()
+		lines = t.splitlines()
 		lines_sz = len(lines)
 		i = 0
 		while i < lines_sz:
 			# Remove comments, anywhere they appear
 			line = lines[i].split(';', 1)[0]
 			if '[' in line and ']' in line:
-				cur_s = line[1:-1]
-				r[cur_s] = {}
+				s = line.lstrip(' \t\v\f\r').rstrip(' \t\v\f\r')
+				assert(s[0] == '[')
+				assert(s[-1] == ']')
+				cur_s = s[1:-1]
+				ret[cur_s] = {}
 				# done parsing now. don't look for a keypair that isn't here
 				i += 1
 				continue
@@ -105,87 +145,25 @@ class Ini:
 			key = p[0]
 			val = p[1]
 			assert(key != '')
-			r[cur_s][key] = val
+			ret[cur_s][key] = val
 			i += 1
-		return r
-	@staticmethod
-	def _marshal_init_line(line : str):
-		# strip out comments
-		line = line.split(';', 1)[0]
-		line_sz = len(line)
-		if line[0] == '[':
-			# must be on the end
-			assert line[-1] == ']'
-			i = 1
-			while i < line_sz - 1:
-				# don't allow perceptively nesting brackets
-				assert line[i] != '['
-				assert line[i] != ']'
-				# necessary to avoid ambiguity
-				assert line[i] != '='
-				i += 1
-		elif '=' in line:
-			keypair = line.split('=', 1)
-			assert keypair[0] != ''
-	@staticmethod
-	def _marshal_init(text : str):
-		assert type(text) is str
-		text_sz = len(text)
-		# file must be ASCII
-		assert is_ascii(text)
-		# trailing newlines
-		assert text[-1] == '\n'
-		lines = text.splitlines()
-		lines_sz = len(lines)
-		i = 0
-		while i < lines_sz:
-			Ini._marshal_line(lines[i])
-			i += 1
-	def marshal(self):
-		assert type(self._d) is 'dict[str, dict[str, str]]'
-		for section in self._d:
-			assert type(section) is str
-			for key in self._d[section]:
-				assert type(key) is str
-				assert key != ''
-				assert type(self._d[key]) is str
-	def __getitem__(self, idx : 'tuple[str, str] | str'):
-		assert type(idx) is 'tuple[str, str]' or type(idx) is str
-		if type(idx) is str:
-			assert idx != ''
-			return self._d[''][idx]
-		else:
-			assert idx[0] != ''
-			assert idx[1] != ''
-			return self._d[idx[0]][idx[1]]
-	def __setitem__(self, idx : 'tuple[str, str] | str', val : 'str | bool'):
-		assert type(val) is str or type(val) is bool
-		assert type(idx) is 'tuple[str, str]' or type(idx) is str
-		if type(val) is bool:
-			val = 'on' if val else 'off'
-		if type(idx) is str:
-			assert idx != ''
-			self._d[''][idx] = val
-		else:
-			assert idx[0] != ''
-			assert idx[1] != ''
-			self._d[idx[0]][idx[1]] = val
-	def sections(self):
-		r: List[str] = []
-		for section in self._d:
-			if section == '': continue
-			r.append(section)
+		return ret
+	def serialise(self):
+		r: str = '\n'
+		for key in self.d['']:
+			r += key + '=' + self.d[''][key] + '\n'
+		r += '\n'
+		for section in self.d:
+			if section == '':
+				continue
+			r += '[' + section + ']\n'
+			for key in self.d[section]:
+				r += key + '=' + self.d[section][key] + '\n'
+			r += '\n'
 		return r
 
 class Col:
-	def __init__(self, r : int = 0, g : int = 0, b : int = 0, a : int = 255):
-		Col._marshal(r, g, b, a)
-		self.r = r
-		self.g = g
-		self.b = b
-		self.a = a
-	@staticmethod
-	def _marshal(r : int, g : int, b : int, a : int):
+	def __init__(self, r : int = 0, g : int = 0, b : int = 0, a : int = 0):
 		assert type(r) is int
 		assert r >= 0 and r <= 255
 		assert type(g) is int
@@ -194,297 +172,831 @@ class Col:
 		assert b >= 0 and b <= 255
 		assert type(a) is int
 		assert a >= 0 and a <= 255
-	def marshal(self):
-		Col._marshal(self.r, self.g, self.b, self.a)
-	def argb8888(self):
-		self.marshal()
-		return self.b | (self.g << 8) | (self.r << 16) | (self.a << 24)
+		self.r = r
+		self.g = g
+		self.b = b
+		self.a = a
 	def rgb555(self):
-		self.marshal()
-		return (self.r >> 3) | ((self.g >> 3) << 5) | ((self.b >> 3) << 10)
-	def jasc(self):
-		self.marshal()
-		return str(self.r) + ' ' + str(self.g) + ' ' + str(self.b)
+		r = (self.r >> 3) & 0x1F
+		g = (self.g >> 3) & 0x1F
+		b = (self.b >> 3) & 0x1F
+		return r | (g << 5) | (b << 10)
 
-class AgbPalette:
-	def __init__(self, text : str):
-		AgbPalette._marshal(text)
-		self._d = AgbPalette._parse(text)
-		if len(self._d) <= 16: self._8bpp = False
-		else: self._8bpp = True
-	@staticmethod
-	def _marshal_line(line : str):
-		if line == '': return
-		channels = line.split(' ')
-		assert len(channels) == 3
-		red = int(channels[0], 10)
-		green = int(channels[1], 10)
-		blue = int(channels[2], 10)
-		assert red >= 0 and red <= 255
-		assert green >= 0 and green <= 255
-		assert blue >= 0 and blue <= 255
-	def marshal(self):
-		AgbPalette._marshal(self._d)
-	@staticmethod
-	def _marshal_init(text : str):
-		assert type(text) is str
-		assert is_ascii(text)
-		lines = text.splitlines()
-		lines_sz = len(lines)
-		assert lines_sz > 3
-		assert lines[0] == 'JASC-PAL'
-		assert int(lines[1], 16) >= 0x100
-		count = int(lines[2], 10)
-		assert count > 0 and count <= 256
-		i = 3
-		while i < lines_sz:
-			AgbPalette._marshal_line(lines[i])
+class MapPalette:
+	def __init__(self, fpath : str):
+		assert type(fpath) is str
+		self.d = JASC.from_file(fpath, False)
+		assert len(self.d) == 256
+	def get16(self, idx : int):
+		assert type(idx) is int
+		assert idx >= 0 and idx <= 16
+		r: list[Col] = []
+		i = idx << 4 # * 16
+		end = i + 16
+		while i < end:
+			a = self.d[i]
+			r.append(Col(a[0], a[1], a[2], 255))
 			i += 1
-	@staticmethod
-	def _marshal(cols : List[Col]):
-		cols_sz = len(cols)
-		i = 0
-		while i < cols_sz:
-			assert type(cols[i]) is Col
-			i += 1
-	@staticmethod
-	def _parse(text : str):
-		ret: List[Col] = []
-		# skip over JASC header with slice
-		lines = text.splitlines()[3:]
-		lines_sz = len(lines)
-		i = 0
-		while i < lines_sz:
-			if lines[i] != '':
-				c = lines[i].split(' ')
-				ret.append(Col(int(c[0], 10), int(c[1], 10), int(c[2], 10)))
-			i += 1
-		return ret
-	@staticmethod
-	def _stringify(cols : List[Col]):
-		ret = ['JASC-PAL', '0100']
-		cols_sz = len(cols)
-		ret.append(str(cols_sz))
-		i = 0
-		while i < cols_sz:
-			ret.append(cols[i].jasc())
-			i += 1
-		return '\n'.join(ret)
-	def __getitem__(self, idx : 'tuple[int, int] | int'):
-		assert type(idx) is 'tuple[int, int]' or type(idx) is int
-		if type(idx) is 'tuple[int, int]':
-			# Multi-dimensional access requires 8-bit palette store
-			assert self._8bpp
-			# << 4 is * 16
-			idx = (idx[0] << 4) + idx[1]
-		assert idx < len(self._d)
-		r: Col = self._d[idx]
 		return r
-	def __setitem__(self, idx : 'tuple[int, int] | int', val : Col):
-		assert type(idx) is 'tuple[int, int]' or type(idx) is int
-		assert type(val) is Col
-		if type(idx) is 'tuple[int, int]':
-			# Multi-dimensional access requires 8-bit palette store
-			assert self._8bpp
-			# << 4 is * 16
-			idx = (idx[0] << 4) + idx[1]
-		assert idx < len(self._d)
-		self._d[idx] = val
-	def __len__(self):
-		return len(self._d)
-	def setsize(self, count : int):
-		assert type(count) is int
-		assert count > 0 and count <= 256
-		old_sz = len(self._d)
-		if old_sz > count:
-			self._d = self._d[:count]
-		elif old_sz < count:
-			i = old_sz
-			while i < count:
-				self._d.append(Col())
-				i += 1
-		if count <= 16: self._8bpp = False
-		else: self._8bpp = True
+	def get256(self):
+		r: list[Col] = []
+		i = 0
+		while i < 256:
+			a = self.d[i]
+			r.append(Col(a[0], a[1], a[2], 255))
+		return r
+	def get1of256(self, idx : int):
+		assert type(idx) is int
+		assert idx >= 0 and idx <= 255
+		a = self.d[idx]
+		return Col(a[0], a[1], a[2], 255)
+	def get1of16(self, lnum : int, idx : int):
+		assert type(lnum) is int
+		assert type(idx) is int
+		assert lnum >= 0 and lnum <= 15
+		assert idx >= 0 and idx <= 15
+		i = (lnum << 4) + idx
+		a = self.d[i]
+		return Col(a[0], a[1], a[2], 255)
 
 class Tileset:
 	def __init__(self, fpath : str):
 		assert type(fpath) is str
-		assert fpath != ''
-		image = PILImage.open(fpath)
-		# make tileset grayscale
-		image2 = image.convert('L')
-		self._d = Tileset._parse(image2)
-		image.close()
-		image2.close()
-		# >> 6 is / 64
-		self._len = len(self._d >> 6)
-	@staticmethod
-	def _xy2offs(x : int, y : int, w : int, h : int):
-		# width and height must be divisible by 8
-		assert w & 7 == 0
-		assert h & 7 == 0
-		assert y < h
-		assert x < w
-		return (y * w) + x
-	@staticmethod
-	def _offs2xy(offs : int, w : int, h : int):
-		# width and height must be divisible by 8
-		assert w & 7 == 0
-		assert h & 7 == 0
-		offsdw = offs // w
-		x = offs - offsdw
-		y = offsdw
-		assert y < h
-		assert x < w
-		return (x, y)
-	@staticmethod
-	def _parse(image : PILImage.Image):
-		# image_{w,h} is denominated in pixels
-		image_w = image.size[0]
-		image_h = image.size[1]
-		# tiles_{w,h} is denominated in tiles
-		tiles_w = image_w >> 3
-		tiles_h = image_h >> 3
-		# each byte stores a palette index between 0-15
-		data_sz = image_w * image_h
-		data = bytearray(data_sz)
+		tmp = PILImage.open(fpath)
+		tset = tmp.convert('L')
+		tmp.close()
+		tset_w = tset.size[0] >> 3 # // 8
+		tset_h = tset.size[1] >> 3 # // 8
+		tdata = bytearray(((tset_w << 3) * (tset_h << 3)) >> 1)
+		tdata_i = 0
 		i = 0
-		while i < data_sz:
-			# >> 6 is / 64
-			# 64 bytes per tile
-			big_offs = i >> 6
-			# coordinate conversion must be denominated in tiles
-			x, y = Tileset._offs2xy(big_offs, tiles_w, tiles_h)
-			# multiply back to get pixel xy
-			x <<= 3
-			y <<= 3
-			pixel = image.getpixel((x, y)) >> 4
-			data[i] = pixel
+		while i < tset_h:
+			j = 0
+			while j < tset_w:
+				tile = tset.crop((j << 3, i << 3, (j << 3) + 8, (i << 3) + 8))
+				k = 0
+				while k < 32:
+					tile_k = k << 1
+					tdata[tdata_i] = (tile.getpixel((tile_k & 7, (tile_k >> 3)))
+						>> 4) | (tile.getpixel(((tile_k + 1) & 7, (tile_k + 1) >> 3)))
+					tdata_i += 1
+					k += 1
+				j += 1
 			i += 1
-		return data
-	def __getitem__(self, idx : 'tuple[int, int] | int'):
-		assert type(idx) is 'tuple[int, int]' or type(idx) is int
-		if type(idx) is 'tuple[int, int]':
-			assert idx[0] >= 0 and idx[0] < self._len
-			assert idx[1] >= 0 and idx[1] < 64
-			# << 6 is * 64
-			idx = (idx[0] << 6) + idx[1]
-		else:
-			assert idx >= 0 and idx < self._len
-			# << 6 is * 64
-			idx <<= 6
-		return self._d[idx:idx + 64]
-	def __setitem__(self, idx : 'tuple[int, int]', val : int):
-		assert type(idx) is 'tuple[int, int]'
-		assert idx[0] >= 0 and idx[0] < self._len
-		assert idx[1] >= 0 and idx[1] < 64
-		assert type(val) is int
-		assert val >= 0 and val <= 15
-		# << 6 is * 64
-		i = (idx[0] << 6) + idx[1]
-		self._d[i] = val
-	def __len__(self):
-		return self._len
-
-class MapBlock:
-	def __init__(self, data : int):
-		assert type(data) is int
-		assert data >= 0 and data < 65536
-		self.block = data & 0x3FF
-		self.move = (data >> 10) & 0x3F
+		self.d = bytes(tdata)
+	def readtile(self, idx : int):
+		assert type(idx) is int
+		return self.d[idx << 5:(idx << 5) + 32] # * 32
+	def readtile8(self, idx : int):
+		rpack = self.readtile(idx)
+		if len(rpack) == 0:
+			rpack = bytes(64)
+		r = bytearray(64)
+		i = 0
+		while i < 32:
+			r[i << 1] = rpack[i] & 0xF
+			r[(i << 1) + 1] = (rpack[i] >> 4)
+			i += 1
+		return bytes(r)
+	def readtile8x(self, idx : int):
+		d = self.readtile8(idx)
+		r = bytearray(64)
+		i = 0
+		while i < 8:
+			a = bytearray(d[i << 3:(i << 3) + 8])
+			a.reverse()
+			r[i << 3:(i << 3) + 8] = a
+			i += 1
+		return bytes(r)
+	def readtile8y(self, idx : int):
+		d = self.readtile8(idx)
+		r = bytearray(64)
+		i = 0
+		j = 7
+		while i < 8:
+			r[i << 3:(i << 3) + 8] = bytearray(d[j << 3:(j << 3) + 8])
+			i += 1
+			j -= 1
+		return bytes(r)
+	def readtile8xy(self, idx : int):
+		d = self.readtile8(idx)
+		r = bytearray(64)
+		i = 0
+		j = 7
+		while i < 8:
+			a = bytearray(d[j << 3:(j << 3) + 8])
+			a.reverse()
+			r[i << 3:(i << 3) + 8] = a
+			i += 1
+			j -= 1
+		return bytes(r)
+	def readtile8r(self, idx : int, xflip : bool, yflip : bool):
+		assert type(idx) is int
+		assert type(xflip) is bool
+		assert type(yflip) is bool
+		if xflip:
+			if yflip: return self.readtile8xy(idx)
+			else: return self.readtile8x(idx)
+		elif yflip: return self.readtile8y(idx)
+		else: return self.readtile8(idx)
+	def readtiles(self, idxs : List[int]):
+		assert(type(idxs) is list)
+		idxs_sz = len(idxs)
+		if idxs_sz == 0:
+			return bytes()
+		assert(type(idxs[0]) is int)
+		r = bytearray(idxs_sz << 5) # * 32
+		i = 0
+		while i < idxs_sz:
+			r2 = self.readtile(idxs[i])
+			r[i << 5:(i << 5) + 32] = r2 # * 32
+		return bytes(r)
 
 class MapData:
 	def __init__(self, owbtext : str, owmtext : str, w : int, h : int):
-		MapData._marshal(owbtext, owmtext, w, h)
-		self._d = MapData._parse(owbtext, owmtext, w, h)
-		self._w = w
-		self._h = h
-	@staticmethod
-	def _marshal(owbtext : str, owmtext : str, w : int, h : int):
-		assert type(owbtext) is str
-		assert type(owmtext) is str
-		assert type(w) is int
-		assert w > 0 and w < 65536
-		assert type(h) is int
-		assert h > 0 and h < 65536
-		MapData._marshal_ow(owbtext, w, h, True)
-		MapData._marshal_ow(owmtext, w, h, False)
-	@staticmethod
-	def _marshal_ow(text : str, w : int, h : int, is_blocks : bool):
-		assert type(text) is str
-		assert type(is_blocks) is bool
-		nums = WSPACE_EXPR.sub(text.replace('\n', ' '), ' ').split(' ')
-		count = w * h
-		assert len(nums) == count
+		assert(type(owbtext) is str)
+		assert(owbtext != '')
+		owbtext_sz = len(owbtext)
+		assert(CheckASCII.bad_ascii(owbtext.encode('utf-8'),
+			owbtext_sz, False) == owbtext_sz)
+		assert(type(owmtext) is str)
+		assert(owmtext != '')
+		owmtext_sz = len(owmtext)
+		assert(CheckASCII.bad_ascii(owmtext.encode('utf-8'),
+			owmtext_sz, False) == owmtext_sz)
+		assert(type(w) is int)
+		assert(w > 0)
+		assert(type(h) is int)
+		assert(h > 0)
+		mdata = bytearray((w * h) << 1) # * 2
+		owb = self._parse(owbtext)
+		owm = self._parse(owmtext)
 		i = 0
-		while i < count:
-			n = int(nums[i], 16)
-			assert n >= 0
-			if is_blocks: assert n <= 0x3FF
-			else: assert n <= 0x3F
+		while i < h:
+			j = 0
+			while j < w:
+				idx = (i * w) + j
+				cur_owb = owb[idx]
+				lo = cur_owb & 0xFF
+				hi = ((cur_owb >> 8) & 0x3) | ((owm[idx] & 0x3F) << 2)
+				mdata[idx << 1] = lo
+				mdata[(idx << 1) + 1] = hi
+				j += 1
 			i += 1
-	@staticmethod
-	def _parse(owbtext : str, owmtext : str, w : int, h : int):
-		owbs = WSPACE_EXPR.sub(owbtext.replace('\n', ' '), ' ').split(' ')
-		owms = WSPACE_EXPR.sub(owmtext.replace('\n', ' '), ' ').split(' ')
-		count = w * h
-		# << 1 is * 2
-		ret = bytearray(count << 1)
+		assert(len(mdata) >> 1 == w * h)
+		self.d = mdata
+		self.w = w
+		self.h = h
+	def writeblock(self, block : int, x : int, y : int):
+		assert(type(block) is int)
+		assert(block >= 0 and block <= 0x3FF)
+		assert(type(x) is int)
+		assert(x >= 0)
+		assert(type(y) is int)
+		assert(y >= 0)
+		idx = (x * self.w) + y
+		# zero out the hi byte's block bits and then OR the new bits back in
+		hi = (self.d[(idx << 1) + 1] & 0xFC) | (block >> 8)
+		lo = block & 0xFF
+		# multiply idx by 2 because we’re getting 16-bit data from a bytearray
+		self.d[idx << 1] = lo
+		self.d[(idx << 1) + 1] = hi
+	def writemperm(self, mperm : int, x : int, y : int):
+		assert(type(mperm) is int)
+		assert(mperm >= 0 and mperm <= 0x3F)
+		assert(type(x) is int)
+		assert(x >= 0)
+		assert(type(y) is int)
+		assert(y >= 0)
+		# go ahead and multiply idx by 2 and add 1, we only need hi byte
+		idx = (((x * self.w) + y) << 1) + 1
+		self.d[idx] = (self.d[idx] & 0x3) | (mperm << 2)
+	def readblock(self, x : int, y : int):
+		assert(type(x) is int)
+		assert(x >= 0)
+		assert(type(y) is int)
+		assert(y >= 0)
+		idx = (y * self.w) + x
+		return (self.d[idx << 1]) | ((self.d[(idx << 1) + 1] & 0x3) << 8)
+	def readblocks(self, blocks : List[Tuple[int, int]]):
+		assert(type(blocks) is list)
+		blocks_sz = len(blocks)
+		r: List[int] = []
 		i = 0
-		while i < count:
-			# store this in little endian, so LSB first
-			# << 1 is * 2
-			owb = int(owbs[i], 16)
-			ret[i << 1] = owb & 0xFF
-			ret[(i << 1) + 1] = (owb >> 8) | (int(owms[i], 16) << 2)
+		while i < blocks_sz:
+			block = blocks[i]
+			assert(type(block) is tuple)
+			assert(len(block) == 2)
+			x: int = blocks[i][0]
+			y: int = blocks[i][1]
+			assert(type(x) is int)
+			assert(type(y) is int)
+			r.append(self.readblock(x, y))
 			i += 1
-		return ret
-	def __getitem__(self, idx : 'tuple[int, int]'):
-		assert type(idx) is 'tuple[int, int]'
-		assert idx[0] >= 0 and idx[0] < self._w
-		assert idx[1] >= 0 and idx[1] < self._h
-		i = (idx[1] * self._h) + idx[0]
-		return MapBlock(self._d[i])
-	def __setitem__(self, idx : 'tuple[int, int]', val : MapBlock):
-		assert type(idx) is 'tuple[int, int]'
-		assert idx[0] >= 0 and idx[0] < self._w
-		assert idx[1] >= 0 and idx[1] < self._h
-		assert type(val) is MapBlock
-		i = (idx[1] * self._h) + idx[0]
-		n = (val.block & 0x3FF) | ((val.move & 0x3F) << 10)
-		self._d[i] = MapBlock(n)
+		return r
+	def readmperm(self, x : int, y : int):
+		assert(type(x) is int)
+		assert(x >= 0)
+		assert(type(y) is int)
+		assert(y >= 0)
+		# go ahead and multiply idx by 2 and add 1, we only need hi byte
+		idx = (((y * self.w) + x) << 1) + 1
+		return self.d[idx] >> 2
+	def readmperms(self, mperms : List[Tuple[int, int]]):
+		assert(type(mperms) is list)
+		mperms_sz = len(mperms)
+		r: List[int] = []
+		i = 0
+		while i < mperms_sz:
+			mperm = mperms[i]
+			assert(type(mperm) is tuple)
+			assert(len(mperm) == 2)
+			x: int = mperm[0]
+			y: int = mperm[1]
+			assert(type(x) is int)
+			assert(type(y) is int)
+			r.append(self.readmperm(x, y))
+			i += 1
+		return r
+	def _parse(self, text : str):
+		r: List[int] = []
+		lines = text.splitlines()
+		lines_sz = len(lines)
+		i = 0
+		while i < lines_sz:
+			line = lines[i].lstrip(' \t\v\f\r').rstrip(' \t\v\f\r')
+			if line == '':
+				i += 1
+				continue
+			items = WSPACE_EXPR.sub(line, ' ').split(' ')
+			items_sz = len(items)
+			j = 0
+			while j < items_sz:
+				r.append(int(items[j], 16))
+				j += 1
+			i += 1
+		return r
 
-BLOCK_INI_KEYS = [
-	'l0tl_tile',
-	'l0tl_pal',
-	'l0tl_xf',
-	'l0tl_yf',
-	'l0tr_tile',
-	'l0tr_pal',
-	'l0tr_xf',
-	'l0tr_yf',
-	'l0bl_tile',
-	'l0bl_pal',
-	'l0bl_xf',
-	'l0bl_yf',
-	'l0br_tile',
-	'l0br_pal',
-	'l0br_xf',
-	'l0br_yf',
-	'l1tl_tile',
-	'l1tl_pal',
-	'l1tl_xf',
-	'l1tl_yf',
-	'l1tr_tile',
-	'l1tr_pal',
-	'l1tr_xf',
-	'l1tr_yf',
-	'l1bl_tile',
-	'l1bl_pal',
-	'l1bl_xf',
-	'l1bl_yf',
-	'l1br_tile',
-	'l1br_pal',
-	'l1br_xf',
-	'l1br_yf'
-]
+class Blockset:
+	def __init__(self, ini : INI, tset : Tileset):
+		assert(type(ini) is INI)
+		assert(type(tset) is Tileset)
+		count = int(ini.readgval('count'), 0)
+		# this is appended to to track duplicate sections
+		existing_nums: List[int] = []
+		assert(count > 0)
+		# each block takes 18 bytes, for 8 tile metadata pieces + 2 behav bytes
+		# each tile metadata piece is 2 bytes, stored little endian
+		blocks = bytearray(count * 18)
+		sections = ini.enumsections()
+		sections_sz = len(sections)
+		i = 0
+		while i < sections_sz:
+			section = sections[i]
+			num = int(section, 0)
+			assert num not in existing_nums
+			existing_nums.append(num)
+			block = bytearray(18)
+			n = int(ini.readval(section, 'l0tl_tile'), 0)
+			assert(n >= 0 and n <= 0x3FF)
+			block[0] = n & 0xFF
+			block[1] = (n >> 8) & 3
+			n = int(ini.readval(section, 'l0tl_pal'), 0)
+			assert(n >= 0 and n <= 0xF)
+			block[1] |= (n << 4)
+			n = int(ini.readval(section, 'l0tl_xf'), 0)
+			assert(n >= 0 and n <= 1)
+			block[1] |= (n << 2)
+			n = int(ini.readval(section, 'l0tl_yf'), 0)
+			assert(n >= 0 and n <= 1)
+			block[1] |= (n << 3)
+			n = int(ini.readval(section, 'l0tr_tile'), 0)
+			assert(n >= 0 and n <= 0x3FF)
+			block[2] = n & 0xFF
+			block[3] = (n >> 8) & 3
+			n = int(ini.readval(section, 'l0tr_pal'), 0)
+			assert(n >= 0 and n <= 0xF)
+			block[3] |= (n << 4)
+			n = int(ini.readval(section, 'l0tr_xf'), 0)
+			assert(n >= 0 and n <= 1)
+			block[3] |= (n << 2)
+			n = int(ini.readval(section, 'l0tr_yf'), 0)
+			assert(n >= 0 and n <= 1)
+			block[3] |= (n << 3)
+			n = int(ini.readval(section, 'l0bl_tile'), 0)
+			assert(n >= 0 and n <= 0x3FF)
+			block[4] = n & 0xFF
+			block[5] = (n >> 8) & 3
+			n = int(ini.readval(section, 'l0bl_pal'), 0)
+			assert(n >= 0 and n <= 0xF)
+			block[5] |= (n << 4)
+			n = int(ini.readval(section, 'l0bl_xf'), 0)
+			assert(n >= 0 and n <= 1)
+			block[5] |= (n << 2)
+			n = int(ini.readval(section, 'l0bl_yf'), 0)
+			assert(n >= 0 and n <= 1)
+			block[5] |= (n << 3)
+			n = int(ini.readval(section, 'l0br_tile'), 0)
+			assert(n >= 0 and n <= 0x3FF)
+			block[6] = n & 0xFF
+			block[7] = (n >> 8) & 3
+			n = int(ini.readval(section, 'l0br_pal'), 0)
+			assert(n >= 0 and n <= 0xF)
+			block[7] |= (n << 4)
+			n = int(ini.readval(section, 'l0br_xf'), 0)
+			assert(n >= 0 and n <= 1)
+			block[7] |= (n << 2)
+			n = int(ini.readval(section, 'l0br_yf'), 0)
+			assert(n >= 0 and n <= 1)
+			block[7] |= (n << 3)
+			n = int(ini.readval(section, 'l1tl_tile'), 0)
+			assert(n >= 0 and n <= 0x3FF)
+			block[8] = n & 0xFF
+			block[9] = (n >> 8) & 3
+			n = int(ini.readval(section, 'l1tl_pal'), 0)
+			assert(n >= 0 and n <= 0xF)
+			block[9] |= (n << 4)
+			n = int(ini.readval(section, 'l1tl_xf'), 0)
+			assert(n >= 0 and n <= 1)
+			block[9] |= (n << 2)
+			n = int(ini.readval(section, 'l1tl_yf'), 0)
+			assert(n >= 0 and n <= 1)
+			block[9] |= (n << 3)
+			n = int(ini.readval(section, 'l1tr_tile'), 0)
+			assert(n >= 0 and n <= 0x3FF)
+			block[10] = n & 0xFF
+			block[11] = (n >> 8) & 3
+			n = int(ini.readval(section, 'l1tr_pal'), 0)
+			assert(n >= 0 and n <= 0xF)
+			block[11] |= (n << 4)
+			n = int(ini.readval(section, 'l1tr_xf'), 0)
+			assert(n >= 0 and n <= 1)
+			block[11] |= (n << 2)
+			n = int(ini.readval(section, 'l1tr_yf'), 0)
+			assert(n >= 0 and n <= 1)
+			block[11] |= (n << 3)
+			n = int(ini.readval(section, 'l1bl_tile'), 0)
+			assert(n >= 0 and n <= 0x3FF)
+			block[12] = n & 0xFF
+			block[13] = (n >> 8) & 3
+			n = int(ini.readval(section, 'l1bl_pal'), 0)
+			assert(n >= 0 and n <= 0xF)
+			block[13] |= (n << 4)
+			n = int(ini.readval(section, 'l1bl_xf'), 0)
+			assert(n >= 0 and n <= 1)
+			block[13] |= (n << 2)
+			n = int(ini.readval(section, 'l1bl_yf'), 0)
+			assert(n >= 0 and n <= 1)
+			block[13] |= (n << 3)
+			n = int(ini.readval(section, 'l1br_tile'), 0)
+			assert(n >= 0 and n <= 0x3FF)
+			block[14] = n & 0xFF
+			block[15] = (n >> 8) & 3
+			n = int(ini.readval(section, 'l1br_pal'), 0)
+			assert(n >= 0 and n <= 0xF)
+			block[15] |= (n << 4)
+			n = int(ini.readval(section, 'l1br_xf'), 0)
+			assert(n >= 0 and n <= 1)
+			block[15] |= (n << 2)
+			n = int(ini.readval(section, 'l1br_yf'), 0)
+			assert(n >= 0 and n <= 1)
+			block[15] |= (n << 3)
+			behav = int(ini.readval(section, 'behav'), 0)
+			assert(behav >= 0 and behav <= 0xFFF)
+			block[16] = behav & 0xFF
+			typ = ini.readval(section, 'type')
+			assert(typ == 'normal' or typ == 'covered' or typ == 'split')
+			typ_n = 0
+			if typ == 'covered': typ_n = 1
+			elif typ == 'split': typ_n = 2
+			block[17] = (behav >> 16) | (typ_n << 6)
+			blocks[i * 18:(i * 18) + 18] = block
+			i += 1
+		self.d = bytes(blocks)
+	def readtile(self, num : int, layer : int, quadrant : int):
+		assert(type(num) is int)
+		assert(num >= 0 and num <= 0x3FF)
+		assert(type(layer) is int)
+		assert(layer >= 0 and layer <= 1)
+		assert(type(quadrant) is int)
+		assert(quadrant >= 0 and quadrant <= 3)
+		idx = (num * 18) + (layer * 8) + (quadrant * 2)
+		return self.d[idx] | ((self.d[idx + 1] & 0x3) << 8)
+	def readtiles(self, tiles : List[Tuple[int, int, int]]):
+		assert(type(tiles) is list)
+		tiles_sz = len(tiles)
+		r: List[int] = []
+		i = 0
+		while i < tiles_sz:
+			tile = tiles[i]
+			assert(type(tile) is tuple)
+			assert(len(tile) == 3)
+			num: int = tile[0]
+			layer: int = tile[1]
+			quadrant: int = tile[2]
+			r.append(self.readtile(num, layer, quadrant))
+			i += 1
+		return r
+	def readpal(self, num : int, layer : int, quadrant : int):
+		assert(type(num) is int)
+		assert(num >= 0 and num <= 0x3FF)
+		assert(type(layer) is int)
+		assert(layer >= 0 and layer <= 1)
+		assert(type(quadrant) is int)
+		assert(quadrant >= 0 and quadrant <= 3)
+		idx = (num * 18) + (layer * 8) + (quadrant * 2) + 1
+		return (self.d[idx] >> 4) & 0xF
+	def readxflip(self, num : int, layer : int, quadrant : int):
+		assert(type(num) is int)
+		assert(num >= 0 and num <= 0x3FF)
+		assert(type(layer) is int)
+		assert(layer >= 0 and layer <= 1)
+		assert(type(quadrant) is int)
+		assert(quadrant >= 0 and quadrant <= 3)
+		idx = (num * 18) + (layer * 8) + (quadrant * 2) + 1
+		return True if (self.d[idx] >> 2) & 1 == 1 else False
+	def readxflips(self, flips : List[Tuple[int, int, int]]):
+		assert(type(flips) is list)
+		flips_sz = len(flips)
+		r: List[bool] = []
+		i = 0
+		while i < flips_sz:
+			flip = flips[i]
+			assert(type(flip) is tuple)
+			assert(len(flip) == 3)
+			num: int = flip[0]
+			layer: int = flip[1]
+			quadrant: int = flip[2]
+			r.append(self.readxflip(num, layer, quadrant))
+			i += 1
+		return r
+	def readyflip(self, num : int, layer : int, quadrant : int):
+		assert(type(num) is int)
+		assert(num >= 0 and num <= 0x3FF)
+		assert(type(layer) is int)
+		assert(layer >= 0 and layer <= 1)
+		assert(type(quadrant) is int)
+		assert(quadrant >= 0 and quadrant <= 3)
+		idx = (num * 18) + (layer * 8) + (quadrant * 2) + 1
+		return True if (self.d[idx] >> 3) & 1 == 1 else False
+	def readyflips(self, flips : List[Tuple[int, int, int]]):
+		assert(type(flips) is list)
+		flips_sz = len(flips)
+		r: List[bool] = []
+		i = 0
+		while i < flips_sz:
+			flip = flips[i]
+			assert(type(flip) is tuple)
+			assert(len(flip) == 3)
+			num: int = flip[0]
+			layer: int = flip[1]
+			quadrant: int = flip[2]
+			r.append(self.readyflip(num, layer, quadrant))
+			i += 1
+		return r
+
+class State:
+	def __init__(self, win : SDL2.SDL_Window, fbuf : SDL2.SDL_Surface,
+	mapdata : MapData, bprima : Blockset, bsecunda : Blockset,
+	tprima : Tileset, tsecunda : Tileset, pprima : MapPalette,
+	psecunda : MapPalette):
+		assert type(mapdata) is MapData
+		assert type(bprima) is Blockset
+		assert type(bsecunda) is Blockset
+		assert type(tprima) is Tileset
+		assert type(tsecunda) is Tileset
+		assert type(pprima) is MapPalette
+		assert type(psecunda) is MapPalette
+		self.win = win
+		self.fbuf = fbuf
+		self.mapdata = mapdata
+		self.bprima = bprima
+		self.bsecunda = bsecunda
+		self.tprima = tprima
+		self.tsecunda = tsecunda
+		self.pprima = pprima
+		self.psecunda = psecunda
+		self._need_update = True
+		self.onsplash = True
+		self.loadmap = False
+		self.x_offs = 0
+		self.y_offs = 0
+	def req_update(self):
+		self._need_update = True
+	def ack_update(self):
+		self._need_update = False
+	def need_update(self):
+		return self._need_update
+
+# render0: get all tiles, perform x flipping and y flipping
+#  -> this deals in one-dimensional bytearrays
+#  -> the pixel format is just two (2) flat 8bpp index bitmaps (no tiling)
+# render1: colour tiles by palette, apply transparency
+#  -> this takes a 1D bytearray and colours onto an SDL_Surface
+
+def render0(mdata : MapData, tprima : Tileset, tsecunda : Tileset,
+bprima : Blockset, bsecunda : Blockset, pprima : MapPalette,
+psecunda: MapPalette, mapview : Tuple[int, int, int, int]):
+	assert(type(mdata) is MapData)
+	assert(type(tprima) is Tileset)
+	assert(type(tsecunda) is Tileset)
+	assert(type(bprima) is Blockset)
+	assert(type(bsecunda) is Blockset)
+	assert(type(pprima) is MapPalette)
+	assert(type(psecunda) is MapPalette)
+	r1 = SDL2.SDL_CreateRGBSurfaceWithFormat(0, mapview[2] * 16,
+		mapview[3] * 16, 32, SDL2.SDL_PIXELFORMAT_RGBA8888)
+	r2 = SDL2.SDL_CreateRGBSurfaceWithFormat(0, mapview[2] * 16,
+		mapview[3] * 16, 32, SDL2.SDL_PIXELFORMAT_RGBA8888)
+	SDL2.SDL_SetSurfaceBlendMode(r1, SDL2.SDL_BLENDMODE_BLEND)
+	SDL2.SDL_SetSurfaceBlendMode(r2, SDL2.SDL_BLENDMODE_BLEND)
+	view = SDL2Ext.PixelView(r1.contents)
+	view2 = SDL2Ext.PixelView(r2.contents)
+	tprima_sz = len(tprima.d) // 32
+	y = mapview[1]
+	while y < mdata.h and y < mapview[3]:
+		x = mapview[0]
+		while x < mdata.w and y < mapview[2]:
+			blockid = mdata.readblock(x, y)
+			bset = bprima
+			bprima_sz = len(bprima.d) // 18
+			if blockid >= bprima_sz:
+				blockid -= bprima_sz
+				bset = bsecunda
+			# each tile is a 64-long array of pixels
+			# each pixel is a 1-byte index of a palette 0-15
+			tilepels: List[bytes] = []
+			i = 0
+			while i < 8:
+				tnum = bset.readtile(blockid, i >> 2, i & 3)
+				tile = None
+				if tnum >= tprima_sz:
+					tile = tsecunda.readtile8r(tnum - tprima_sz,
+						bset.readxflip(blockid, i >> 2, i & 3),
+						bset.readyflip(blockid, i >> 2, i & 3))
+				else:
+					tile = tprima.readtile8r(tnum,
+						bset.readxflip(blockid, i >> 2, i & 3),
+						bset.readyflip(blockid, i >> 2, i & 3))
+				tilepels.append(tile)
+				i += 1
+			palidxs: List[int] = [
+				# top left, layer 0
+				bset.readpal(blockid, 0, 0),
+				# top right, layer 0
+				bset.readpal(blockid, 0, 1),
+				# bottom left, layer 0
+				bset.readpal(blockid, 0, 2),
+				# bottom right, layer 0
+				bset.readpal(blockid, 0, 3),
+				# top left, layer 1
+				bset.readpal(blockid, 1, 0),
+				# top right, layer 1
+				bset.readpal(blockid, 1, 1),
+				# bottom left, layer 1
+				bset.readpal(blockid, 1, 2),
+				# bottom right, layer 1
+				bset.readpal(blockid, 1, 3)
+			]
+			# LAYER 0
+			# copy top left tile
+			pel_x = x * 16
+			pel_y = y * 16
+			i = 0
+			while i < 64:
+				pal = pprima if palidxs[0] < 6 else psecunda
+				col = pal.get1of16(palidxs[0], int(tilepels[0][i]))
+				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
+					col.b | (col.g << 8) | (col.r << 16) | 0xFF000000
+				i += 1
+			# copy top right tile
+			pel_x = (x * 16) + 8
+			pel_y = y * 16
+			i = 0
+			while i < 64:
+				pal = pprima if palidxs[1] < 6 else psecunda
+				col = pal.get1of16(palidxs[1], int(tilepels[1][i]))
+				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
+					col.b | (col.g << 8) | (col.r << 16) | 0xFF000000
+				i += 1
+			# copy bottom left tile
+			pel_x = x * 16
+			pel_y = (y * 16) + 8
+			i = 0
+			while i < 64:
+				pal = pprima if palidxs[2] < 6 else psecunda
+				col = pal.get1of16(palidxs[2], int(tilepels[2][i]))
+				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
+					col.b | (col.g << 8) | (col.r << 16) | 0xFF000000
+				i += 1
+			# copy bottom right tile
+			pel_x = (x * 16) + 8
+			pel_y = (y * 16) + 8
+			i = 0
+			while i < 64:
+				pal = pprima if palidxs[3] < 6 else psecunda
+				col = pal.get1of16(palidxs[3], int(tilepels[3][i]))
+				view[pel_y + (i // 8)][pel_x + (i % 8)] = \
+					col.b | (col.g << 8) | (col.r << 16) | 0xFF000000
+				i += 1
+			# LAYER 1
+			# copy top left tile
+			pel_x = x * 16
+			pel_y = y * 16
+			i = 0
+			while i < 64:
+				subpalidx = int(tilepels[4][i])
+				pal = pprima if palidxs[4] < 6 else psecunda
+				col = pal.get1of16(palidxs[4], subpalidx)
+				alpha = 0 if subpalidx == 0 else 255
+				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
+					col.b | (col.g << 8) | (col.r << 16) | (alpha << 24)
+				i += 1
+			# copy top right tile
+			pel_x = (x * 16) + 8
+			pel_y = y * 16
+			i = 0
+			while i < 64:
+				subpalidx = int(tilepels[5][i])
+				pal = pprima if palidxs[5] < 6 else psecunda
+				col = pal.get1of16(palidxs[5], subpalidx)
+				alpha = 0 if subpalidx == 0 else 255
+				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
+					col.b | (col.g << 8) | (col.r << 16) | (alpha << 24)
+				i += 1
+			# copy bottom left tile
+			pel_x = x * 16
+			pel_y = (y * 16) + 8
+			i = 0
+			while i < 64:
+				subpalidx = int(tilepels[6][i])
+				pal = pprima if palidxs[6] < 6 else psecunda
+				col = pal.get1of16(palidxs[6], subpalidx)
+				alpha = 0 if subpalidx == 0 else 255
+				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
+					col.b | (col.g << 8) | (col.r << 16) | (alpha << 24)
+				i += 1
+			# copy bottom right tile
+			pel_x = (x * 16) + 8
+			pel_y = (y * 16) + 8
+			i = 0
+			while i < 64:
+				subpalidx = int(tilepels[7][i])
+				pal = pprima if palidxs[7] < 6 else psecunda
+				col = pal.get1of16(palidxs[7], subpalidx)
+				alpha = 0 if subpalidx == 0 else 255
+				view2[pel_y + (i // 8)][pel_x + (i % 8)] = \
+					col.b | (col.g << 8) | (col.r << 16) | (alpha << 24)
+				i += 1
+			x += 1
+		y += 1
+	return (r1, r2)
+
+def pil2sdl(lis : List[Tuple]):
+	assert(type(lis) is list)
+	i = 0
+	ret_i = 0
+	lis_sz = len(lis)
+	ret = bytearray(lis_sz << 2) # * 4
+	while i < lis_sz:
+		ret[ret_i] = lis[i][0]
+		ret[ret_i + 1] = lis[i][1]
+		ret[ret_i + 2] = lis[i][2]
+		ret[ret_i + 3] = 255
+		ret_i += 4
+		i += 1
+	return bytes(ret)
+
+def mainloop(state : State):
+	e = SDL2.SDL_Event()
+	while SDL2.SDL_PollEvent(Ref(e)) != 0:
+		if e.type == SDL2.SDL_QUIT:
+			return True
+		elif e.type == SDL2.SDL_KEYDOWN and not state.onsplash:
+			code = e.key.keysym.scancode
+			print('keypress!', code, '::', state.y_offs, state.mapdata.h)
+			if code == SDL2.SDL_SCANCODE_DOWN and \
+			state.y_offs + state.mapdata.h < MAPVIEW_H:
+				state.y_offs += 1
+				state.req_update()
+			elif code == SDL2.SDL_SCANCODE_RIGHT and \
+			state.x_offs + state.mapdata.w < MAPVIEW_W:
+				state.x_offs += 1
+				state.req_update()
+			elif code == SDL2.SDL_SCANCODE_UP and state.y_offs > 0:
+				state.y_offs -= 1
+				state.req_update()
+			elif code == SDL2.SDL_SCANCODE_LEFT and state.x_offs > 0:
+				state.x_offs -= 1
+				state.req_update()
+		elif e.type == SDL2.SDL_MOUSEBUTTONUP:
+			if state.onsplash:
+				imag = PILImage.open(OS.path.join('etc', 'working.png'))
+				surf = SDL2.SDL_CreateRGBSurfaceFrom(
+					pil2sdl(list(imag.getdata())), FRAME_W, FRAME_H, 32,
+					4 * FRAME_W, MASK_R, MASK_G, MASK_B, MASK_A)
+				imag.close()
+				SDL2.SDL_BlitSurface(surf, FBUF_RECT,
+					state.fbuf, FBUF_RECT)
+				state.req_update()
+				state.onsplash = False
+				state.loadmap = True
+		if state.loadmap:
+			surfs = render0(state.mapdata, state.tprima, state.tsecunda,
+				state.bprima, state.bsecunda, state.pprima, state.psecunda,
+				(state.x_offs, state.y_offs, MAPVIEW_W // 16, MAPVIEW_H // 16))
+			MAP_RECT = SDL2.SDL_Rect(0, 0, MAPVIEW_W, MAPVIEW_H)
+			SDL2.SDL_BlitSurface(surfs[0], MAP_RECT, state.fbuf, FBUF_RECT)
+			SDL2.SDL_BlitSurface(surfs[1], MAP_RECT, state.fbuf, FBUF_RECT)
+			state.req_update()
+			state.loadmap = False
+	if state.need_update():
+		if not state.onsplash:
+			surfs = render0(state.mapdata, state.tprima, state.tsecunda,
+				state.bprima, state.bsecunda, state.pprima, state.psecunda,
+				(state.x_offs, state.y_offs, MAPVIEW_W // 16, MAPVIEW_H // 16))
+			MAP_RECT = SDL2.SDL_Rect(0, 0, MAPVIEW_W, MAPVIEW_H)
+			SDL2.SDL_BlitSurface(surfs[0], MAP_RECT, state.fbuf, FBUF_RECT)
+			SDL2.SDL_BlitSurface(surfs[1], MAP_RECT, state.fbuf, FBUF_RECT)
+		SDL2.SDL_BlitSurface(state.fbuf, None,
+			SDL2.SDL_GetWindowSurface(state.win), None)
+		SDL2.SDL_UpdateWindowSurface(state.win)
+		state.ack_update()
+	SDL2.SDL_ShowWindow(state.win)
+	SDL2.SDL_Delay(16)
+	return False
+
+def main(args : List[str]):
+	assert(type(args) is list)
+	argc = len(args)
+	assert(argc >= 1)
+	assert(type(args[0]) is str)
+	silent = '-s' in args or '--silent' in args
+	if argc == 1 or '-h' in args or '--help' in args:
+		print(HELP_TEXT)
+		return 127
+	i = 1
+	ini_fpath = None
+	owb_fpath = None
+	owm_fpath = None
+	while i < argc:
+		if args[i].startswith('-'):
+			if args[i] == '-s' or args[i] == '--silent':
+				# Already handled above
+				pass
+			else: print('WARNING: Unknown flag \u2018%s\u2019' % args[i])
+		elif ini_fpath == None:
+			ini_fpath = args[i]
+		elif owb_fpath == None:
+			owb_fpath = args[i]
+		elif owm_fpath == None:
+			owm_fpath = args[i]
+		else: print('WARNING: Excess parameter \u2018%s\u2019' % args[i])
+		i += 1
+	if ini_fpath == None or owb_fpath == None or owm_fpath == None:
+		print('Insufficient parameters. Exiting...')
+		return 127
+	SDL2.SDL_Init(SDL2.SDL_INIT_VIDEO)
+	win: SDL2.SDL_Window = SDL2.SDL_CreateWindow(
+		'SABLMAP alpha'.encode('utf-8'), SDL2.SDL_WINDOWPOS_UNDEFINED,
+		SDL2.SDL_WINDOWPOS_UNDEFINED, FRAME_W, FRAME_H, 0)
+	fbuf: SDL2.SDL_Surface = SDL2.SDL_CreateRGBSurface(0, FRAME_W, FRAME_H,
+		32, MASK_R, MASK_G, MASK_B, MASK_A)
+	SDL2.SDL_SetSurfaceBlendMode(fbuf, SDL2.SDL_BLENDMODE_NONE)
+	ini = INI(ini_fpath)
+	f = open(owb_fpath, 'r')
+	owbtext = f.read()
+	f.close()
+	f = open(owm_fpath, 'r')
+	owmtext = f.read()
+	f.close()
+	mdata = MapData(owbtext, owmtext,
+		int(ini.readgval('w'), 0), int(ini.readgval('h'), 0))
+	basedir = OS.path.dirname(ini_fpath)
+	tdir = OS.path.join(basedir, 'tileset')
+	bdir = OS.path.join(basedir, 'blockset')
+	nprima = ini.readgval('prima')
+	tprima = Tileset(OS.path.join(tdir, nprima + '.4tn.il.png'))
+	pprima = MapPalette(OS.path.join(tdir, nprima + '.jasc'))
+	bprima = Blockset(INI(OS.path.join(bdir, nprima + '.ini')), tprima)
+	nsecunda = ini.readgval('secunda')
+	tsecunda = Tileset(OS.path.join(tdir, nsecunda + '.4tn.il.png'))
+	psecunda = MapPalette(OS.path.join(tdir, nsecunda + '.jasc'))
+	bsecunda = Blockset(INI(OS.path.join(bdir, nsecunda + '.ini')),
+		tsecunda)
+	state = State(win, fbuf, mdata, bprima, bsecunda, tprima, tsecunda,
+		pprima, psecunda)
+	imag = PILImage.open(OS.path.join('etc', 'startup.png'))
+	surf = SDL2.SDL_CreateRGBSurfaceFrom(pil2sdl(list(imag.getdata())),
+		FRAME_W, FRAME_H, 32, 4 * FRAME_W, MASK_R, MASK_G, MASK_B, MASK_A)
+	imag.close()
+	SDL2.SDL_BlitSurface(surf, FBUF_RECT, fbuf, FBUF_RECT)
+	state.req_update()
+	while mainloop(state) == False: continue
+	SDL2.SDL_DestroyWindow(win)
+	SDL2.SDL_Quit()
+	return 0
+
+if __name__ == '__main__':
+	from sys import argv, exit
+	exit(main(argv))
