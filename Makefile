@@ -9,9 +9,9 @@ ifeq ($(strip $(AQ)),)
 $(error "AQ was not found in your environment. You need to install the Slick Makefiles from github.com/aquefir/slick to continue.")
 endif
 
-TP := GBA
+TP := GBASP
 
-include $(AQ)/lib/slick/base.mk
+include etc/base.mk
 
 # name of project. used in output binary naming
 PROJECT := swows
@@ -41,14 +41,14 @@ LIBDIRS :=
 FWORKS :=
 
 # sources
-SFILES    :=
+SFILES    := \
+	src/hnam.s
 CFILES    :=
 CPPFILES  :=
 PUBHFILES :=
 PRVHFILES :=
 
 # assets
-ACTFILES  :=
 SNIPFILES := \
 	data/blendan.snip \
 	data/maylene.snip
@@ -59,5 +59,8 @@ TES_CPPFILES  :=
 TES_PUBHFILES :=
 TES_PRVHFILES :=
 
+# custom scripts
+SNIP2BIN := $(PY) util/snip2bin.py
+
 # this defines all our usual targets
-include $(AQ)/lib/slick/targets.mk
+include etc/targets.mk
