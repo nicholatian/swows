@@ -3,6 +3,7 @@
 		"./util"
 	],
 	"files.associations": {
-		"*.h": "c"
+		"*.h": "c",
+		"*.s": "arm"
 	}
 }
