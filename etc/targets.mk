@@ -465,6 +465,8 @@ endif
 ifeq ($(.L_AFILE),1)
 .L_TARGETS += $(.L_ATARGET)
 endif
+else ifeq ($(TP),GBASP)
+.L_TARGETS += $(.L_BINTARGET)
 else ifeq ($(TP),IBMPC)
 ifeq ($(.L_EXEFILE),1)
 .L_TARGETS += $(.L_BINTARGET)
@@ -513,7 +515,6 @@ endif
 	$(SFILES:.s=.s.o) \
 	$(CFILES:.c=.c.o) \
 	$(CPPFILES:.cpp=.cpp.o) \
-	$(ACTFILES:.act=.act.o) \
 	$(SNIPFILES:.snip=.snip.o)
 
 .L_OFILES.LINUX := \
@@ -539,13 +540,13 @@ endif
 .L_OFILES.GBA := \
 	$(SFILES.GBA:.s=.s.o) \
 	$(CFILES.GBA:.c=.c.o) \
-	$(CPPFILES.GBA:.cpp=.cpp.o)
+	$(CPPFILES.GBA:.cpp=.cpp.o) \
+	$(SNIPFILES.GBASP:.snip=.snip.o)
 
 .L_OFILES.GBASP := \
 	$(SFILES.GBASP:.s=.s.o) \
 	$(CFILES.GBASP:.c=.c.o) \
 	$(CPPFILES.GBASP:.cpp=.cpp.o) \
-	$(ACTFILES.GBASP:.act=.act.o) \
 	$(SNIPFILES.GBASP:.snip=.snip.o)
 
 .L_OFILES.IBMPC := \
@@ -916,13 +917,34 @@ endif # $(NO_TES)
 	$(call .L_File,S,$@)
 	@$(AS) -o $@ $(ASFLAGS) $(.K_ASDEFINE) $(.K_ASINCLUDE) $<
 
-%.act.o: %.act
+%.owb.o: %.owb
+	$(call .L_File,OWMAP,$@)
+	@$(OWMAP2O) $< $@
+
+%.owm.o: %.owm
+	$(call .L_File,OWMAP,$@)
+	@$(OWMAP2O) $< $@
+
+%.mapb.o: %.mapb
+	$(call .L_File,MAPB,$@)
+	@$(MAPB2O) $< $@
+
+%.jasc.o: %.jasc
 	$(call .L_File,PAL,$@)
-	@$(ACT2O) $< $@
+	@$(JASC2O) $< $@
 
 %.snip.o: %.snip
+#	$(call .L_File,TXT,$@)
+	$(SNIP2BIN) $< | $(BIN2ASM) -s `$(EGMAN) -i $<` - | \
+		$(AS) $(ASFLAGS) -o $@ -
+
+%.scrip.o: %.scrip
 	$(call .L_File,TXT,$@)
-	@$(SNIP2O) $< $@
+	@$(SCRIP2O) $< $@
+
+%.png.o: %.png
+	$(call .L_File,GFX,$@)
+	@$(GFX2O) $< $@
 
 # TESfile recipes.
 
@@ -987,6 +1009,7 @@ endif
 $(.L_EXETARGET): $(.L_OFILES)
 ifneq ($(strip $(.L_OFILES)),)
 	$(call .L_File,LD,$@)
+	@$(ECHO) $^
 	@$(LD) $(LDFLAGS) -o $@ $^ $(.K_LIB)
 	$(call .L_File,STRIP,$@)
 	@$(REALSTRIP) -s $@
@@ -999,10 +1022,15 @@ endif
 ifneq ($(.L_EXETARGET),$(.L_BINTARGET))
 $(.L_BINTARGET): $(.L_EXETARGET)
 	$(call .L_File,OCPY,$@)
-	@$(OCPY) -O binary $< $@
+	@$(OCPY) -O binary $(PROJECT).elf $(PROJECT).bin
 ifeq ($(TP),GBA)
 	$(call .L_File,FIX,$@)
 	@$(FIX) $@ $(FIXFLAGS) 1>/dev/null
+endif
+ifeq ($(TP),GBASP)
+	$(call .L_File,FIX,$@)
+	@$(PY) util/insert.py etc/hooks.list 3rdparty/emer.gba \
+		$(PROJECT).bin $(PROJECT).elf $(PROJECT).gba
 endif
 endif
 

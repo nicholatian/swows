@@ -118,6 +118,7 @@ TC.LINUX  := GNU
 TC.WIN32  := GNU
 TC.WIN64  := GNU
 TC.GBA    := GNU
+TC.GBASP  := GNU
 TC.IBMPC  := GNU
 TC.APE    := GNU
 
@@ -258,6 +259,8 @@ LINT.DARWIN    := /usr/local/bin/cppcheck
 INSTALL.DARWIN := /usr/local/opt/coreutils/bin/ginstall # GNU coreutils
 ECHO.DARWIN    := /usr/local/opt/coreutils/bin/gecho
 CP.DARWIN      := /usr/local/opt/coreutils/bin/gcp
+BIN2ASM.DARWIN := /usr/local/bin/bin2asm
+EGMAN.DARWIN   := /usr/local/bin/mangledeggs
 
 # Linux host
 
@@ -295,20 +298,20 @@ OCPY.LINUX.WIN64.GNU  := /usr/bin/x86_64-w64-mingw32-objcopy
 STRIP.LINUX.WIN64.GNU := /usr/bin/x86_64-w64-mingw32-strip
 
 # Game Boy Advance
-AS.DARWIN.GBA.GNU    := /opt/devkitpro/devkitARM/bin/arm-none-eabi-as
-CC.DARWIN.GBA.GNU    := /opt/devkitpro/devkitARM/bin/arm-none-eabi-gcc
-CXX.DARWIN.GBA.GNU   := /opt/devkitpro/devkitARM/bin/arm-none-eabi-g++
-AR.DARWIN.GBA.GNU    := /opt/devkitpro/devkitARM/bin/arm-none-eabi-ar
-OCPY.DARWIN.GBA.GNU  := /opt/devkitpro/devkitARM/bin/arm-none-eabi-objcopy
-STRIP.DARWIN.GBA.GNU := /opt/devkitpro/devkitARM/bin/arm-none-eabi-strip
+AS.LINUX.GBA.GNU    := /opt/devkitpro/devkitARM/bin/arm-none-eabi-as
+CC.LINUX.GBA.GNU    := /opt/devkitpro/devkitARM/bin/arm-none-eabi-gcc
+CXX.LINUX.GBA.GNU   := /opt/devkitpro/devkitARM/bin/arm-none-eabi-g++
+AR.LINUX.GBA.GNU    := /opt/devkitpro/devkitARM/bin/arm-none-eabi-ar
+OCPY.LINUX.GBA.GNU  := /opt/devkitpro/devkitARM/bin/arm-none-eabi-objcopy
+STRIP.LINUX.GBA.GNU := /opt/devkitpro/devkitARM/bin/arm-none-eabi-strip
 
 # Game Boy Advance Sourcepatching
-AS.DARWIN.GBASP.GNU    := /opt/devkitpro/devkitARM/bin/arm-none-eabi-as
-CC.DARWIN.GBASP.GNU    := /opt/devkitpro/devkitARM/bin/arm-none-eabi-gcc
-CXX.DARWIN.GBASP.GNU   := /opt/devkitpro/devkitARM/bin/arm-none-eabi-g++
-AR.DARWIN.GBASP.GNU    := /opt/devkitpro/devkitARM/bin/arm-none-eabi-ar
-OCPY.DARWIN.GBASP.GNU  := /opt/devkitpro/devkitARM/bin/arm-none-eabi-objcopy
-STRIP.DARWIN.GBASP.GNU := /opt/devkitpro/devkitARM/bin/arm-none-eabi-strip
+AS.LINUX.GBASP.GNU    := /opt/devkitpro/devkitARM/bin/arm-none-eabi-as
+CC.LINUX.GBASP.GNU    := /opt/devkitpro/devkitARM/bin/arm-none-eabi-gcc
+CXX.LINUX.GBASP.GNU   := /opt/devkitpro/devkitARM/bin/arm-none-eabi-g++
+AR.LINUX.GBASP.GNU    := /opt/devkitpro/devkitARM/bin/arm-none-eabi-ar
+OCPY.LINUX.GBASP.GNU  := /opt/devkitpro/devkitARM/bin/arm-none-eabi-objcopy
+STRIP.LINUX.GBASP.GNU := /opt/devkitpro/devkitARM/bin/arm-none-eabi-strip
 
 # MS-DOS with DJGPP
 AS.LINUX.IBMPC.GNU    := /usr/bin/as
@@ -334,6 +337,8 @@ LINT.LINUX    := /usr/bin/cppcheck
 INSTALL.LINUX := /usr/bin/install
 ECHO.LINUX    := /bin/echo # Not a bashism
 CP.LINUX      := /bin/cp # Not a bashism
+BIN2ASM.LINUX := /usr/bin/bin2asm
+EGMAN.LINUX   := /usr/bin/mangledeggs
 
 ## Suffixes.
 
@@ -354,13 +359,14 @@ EXE.DARWIN :=
 EXE.WIN32  := .exe
 EXE.WIN64  := .exe
 EXE.GBA    := .elf
-EXE.GBASP  := .gba
+EXE.GBASP  := .elf
 EXE.IBMPC  := .elf
 EXE.APE    := .com.dbg
 
 # Binary executables.
 
 BIN.GBA   := .gba
+BIN.GBASP := .bin
 BIN.IBMPC := .com
 BIN.APE   := .com
 
@@ -519,6 +525,7 @@ LDFLAGS.COMMON.DARWIN.XCODE := -fPIE
 LDFLAGS.COMMON.WIN32.GNU    := -fPIE
 LDFLAGS.COMMON.WIN64.GNU    := -fPIE
 LDFLAGS.COMMON.GBA.GNU      :=
+LDFLAGS.COMMON.GBASP.GNU    := -nostdlib -T etc/gba.ld -T etc/emer.ld
 LDFLAGS.COMMON.IBMPC.GNU    := -m32 -march=i386 -static -nostdlib -no-pie \
 	-Wl,--as-needed -Wl,--build-id=none -Wl,--nmagic -ffreestanding
 LDFLAGS.COMMON.APE.GNU      := -march=x86-64 -mtune=skylake -fuse-ld=bfd \
@@ -562,7 +569,7 @@ SYNDEFS.WIN64  := WINDOWS IA32 LILENDIAN WORDSZ_64 HAVE_I32 HAVE_I64 HAVE_FP \
 	FP_HARD FP_SOFT LONGSZ_32 WIN64
 SYNDEFS.GBA    := GBA ARMV4T LILENDIAN WORDSZ_32 HAVE_I32 HAVE_FP FP_SOFT \
 	LONGSZ_32
-SYNDEFS.GBA    := GBA SOURCEPATCH ARMV4T LILENDIAN WORDSZ_32 HAVE_I32 \
+SYNDEFS.GBASP  := GBA SOURCEPATCH ARMV4T LILENDIAN WORDSZ_32 HAVE_I32 \
 	LONGSZ_32
 SYNDEFS.IBMPC  := IBMPC I86 LILENDIAN WORDSZ_16
 SYNDEFS.APE    := APE AMD64 LILENDIAN WORDSZ_64 HAVE_I32 HAVE_I64 HAVE_FP \
@@ -945,6 +952,48 @@ CP.O_CUSTOM := $(CP)
 
 # Finally, set the variable.
 override CP := $(CP.O_$(.O_CP))
+
+# Binary to assembly converter ('bin2asm').
+
+# Inspect the origin of the new variable.
+# If it is undefined or set by default, say so. Otherwise it was customised.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
+ifeq ($(origin BIN2ASM),undefined)
+.O_BIN2ASM := DEFAULT
+else ifeq ($(origin BIN2ASM),default)
+.O_BIN2ASM := DEFAULT
+else
+# environment [override], file, command line, override, automatic
+.O_BIN2ASM := CUSTOM
+endif # $(origin BIN2ASM)
+
+# Set the origin-dependent values of the new variable.
+BIN2ASM.O_DEFAULT := $(BIN2ASM.$(.K_UNAME))
+BIN2ASM.O_CUSTOM := $(BIN2ASM)
+
+# Finally, set the variable.
+override BIN2ASM := $(BIN2ASM.O_$(.O_BIN2ASM))
+
+# Mangler ('egman').
+
+# Inspect the origin of the new variable.
+# If it is undefined or set by default, say so. Otherwise it was customised.
+# The ".O_" prefix denotes "origin" and is to prevent naming collisions.
+ifeq ($(origin EGMAN),undefined)
+.O_EGMAN := DEFAULT
+else ifeq ($(origin EGMAN),default)
+.O_EGMAN := DEFAULT
+else
+# environment [override], file, command line, override, automatic
+.O_EGMAN := CUSTOM
+endif # $(origin EGMAN)
+
+# Set the origin-dependent values of the new variable.
+EGMAN.O_DEFAULT := $(EGMAN.$(.K_UNAME))
+EGMAN.O_CUSTOM := $(EGMAN)
+
+# Finally, set the variable.
+override EGMAN := $(EGMAN.O_$(.O_EGMAN))
 
 # Make builds deterministic when using LLVM or GNU C/C++ compilers.
 # These are the environment variables necessary; see CFLAGS and CXXFLAGS for
