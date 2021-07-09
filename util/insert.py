@@ -144,10 +144,14 @@ def getHooks(hooksfile, objfile):
 					i += 1
 			count = len(parts)
 			# ensure it's within normal bounds
-			if count < 2 or count > 3:
+			if count < 2 or count > 4:
 				raise Exception('Strange number of items on line ' +
 					str(lnum + 1) + ' of arm-none-eabi-nm\u2019s output: \u201C' +
 					str(parts) + '\u201D')
+			# ignore length fields
+			if count == 4:
+				parts = parts[:3]
+				count = 3
 			# finally, check for a match
 			if parts[0] == name:
 				foundparts += [parts]
@@ -222,7 +226,6 @@ def main(hooksfile, inrom, inhax, inobj, outfile):
 	while(i < bloblen):
 		outbuf[i + origin] = inbuf[i]
 		i += 1
-	
 	# insert the binary blob
 	outbin.seek(0)
 	outbin.write(outbuf)
