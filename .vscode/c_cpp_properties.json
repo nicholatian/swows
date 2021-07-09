@@ -3,28 +3,23 @@
 		{
 			"name": "Mac",
 			"includePath": [
-				"${workspaceFolder}/src",
-				"/usr/local/include",
-				"/usr/local/include/glib-2.0",
-				"/usr/local/lib/glib-2.0/include"
+				"${workspaceFolder}/src"
 			],
 			"defines": [
-				"CFG_DARWIN",
-				"CFG_AMD64",
+				"CFG_GBASP",
+				"CFG_ARMV4T",
 				"CFG_LILENDIAN",
-				"CFG_WORDSZ_64",
-				"CFG_LONGSZ_64",
+				"CFG_WORDSZ_32",
+				"CFG_LONGSZ_32",
 				"CFG_HAVE_I32",
-				"CFG_HAVE_I64",
 				"CFG_HAVE_FP",
-				"CFG_FP_HARD",
 				"CFG_FP_SOFT",
 				"__VSCODE_INTELLISENSE__"
 			],
 			"cStandard": "c89",
 			"cppStandard": "c++11",
 			"macFrameworkPath": [],
-			"compilerPath": "/usr/local/opt/gcc/bin/gcc-10"
+			"compilerPath": "/opt/devkitpro/devkitARM/bin/arm-none-eabi-gcc"
 		}, {
 			"name": "Linux",
 			"includePath": [
@@ -33,15 +28,13 @@
 				"/usr/include"
 			],
 			"defines": [
-				"CFG_LINUX",
-				"CFG_AMD64",
+				"CFG_GBASP",
+				"CFG_ARMV4T",
 				"CFG_LILENDIAN",
-				"CFG_WORDSZ_64",
-				"CFG_LONGSZ_64",
+				"CFG_WORDSZ_32",
+				"CFG_LONGSZ_32",
 				"CFG_HAVE_I32",
-				"CFG_HAVE_I64",
 				"CFG_HAVE_FP",
-				"CFG_FP_HARD",
 				"CFG_FP_SOFT",
 				"__VSCODE_INTELLISENSE__"
 			],
