@@ -26,6 +26,8 @@
 *.agb
 *.elf
 *.bin
+*.sa*
+*.sg*
 *.tar*
 *.pyc
 
@@ -33,6 +35,7 @@
 
 ## Sourcepatching specific
 
+etc/mapruby
 etc/emer.ld
 
 
