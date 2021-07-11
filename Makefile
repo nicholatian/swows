@@ -42,13 +42,33 @@ FWORKS :=
 
 # sources
 SFILES    := \
-	src/hnam.s
+	src/bset/outside.s \
+	src/bset/petalburg.s \
+	src/map/littleroot.s \
+	src/hnam.s \
+	src/map.s
 CFILES    :=
 CPPFILES  :=
 PUBHFILES :=
 PRVHFILES :=
 
 # assets
+JASCFILES := \
+	data/extern/map/blockset/outside.jasc \
+	data/extern/map/blockset/petalburg.jasc
+MAPFILES  := \
+	data/extern/map/littleroot.map
+MAPBFILES := \
+	data/extern/map/littleroot.mapb
+BSETFILES := \
+	data/extern/map/blockset/outside.bset \
+	data/extern/map/blockset/petalburg.bset
+BSAFILES  := \
+	data/extern/map/blockset/outside.bsa \
+	data/extern/map/blockset/petalburg.bsa
+IMGFILES  := \
+	data/extern/map/tileset/outside.4tn.il.png \
+	data/extern/map/tileset/petalburg.4tn.il.png
 SNIPFILES := \
 	data/blendan.snip \
 	data/maylene.snip
@@ -61,6 +81,8 @@ TES_PRVHFILES :=
 
 # custom scripts
 SNIP2BIN := $(PY) util/snip2bin.py
+JASC2BIN := $(PY) util/jasc2gba.py
+GFX2O    := $(PY) util/gfx2o.py
 
 # this defines all our usual targets
 include etc/targets.mk

@@ -102,8 +102,7 @@ endif
 .L_File.MID   := ---> \033[35mProcessing
 .L_File.PCM   := ---> \033[35mAssembling
 .L_File.IMG   := ---> \033[33mTransmogrifying
-.L_File.PAL   := ---> \033[33mProcessing
-.L_File.TXT   := ---> \033[32mProcessing
+.L_File.BIN   := ---> \033[32mProcessing
 
 .L_File = @$(ECHO) -e " $(.L_File.$(1))\033[0m \033[1m$(2)\033[0m ..."
 .L_FileNoAt = $(ECHO) -e " $(.L_File.$(1))\033[0m \033[1m$(2)\033[0m ..."
@@ -515,7 +514,13 @@ endif
 	$(SFILES:.s=.s.o) \
 	$(CFILES:.c=.c.o) \
 	$(CPPFILES:.cpp=.cpp.o) \
-	$(SNIPFILES:.snip=.snip.o)
+	$(SNIPFILES:.snip=.snip.o) \
+	$(MAPFILES:.map=.map.o) \
+	$(MAPBFILES:.mapb=.mapb.o) \
+	$(BSAFILES:.bsa=.bsa.o) \
+	$(BSETFILES:.bset=.bset.o) \
+	$(JASCFILES:.jasc=.jasc.o) \
+	$(IMGFILES:.png=.png.o)
 
 .L_OFILES.LINUX := \
 	$(SFILES.LINUX:.s=.s.o) \
@@ -547,7 +552,13 @@ endif
 	$(SFILES.GBASP:.s=.s.o) \
 	$(CFILES.GBASP:.c=.c.o) \
 	$(CPPFILES.GBASP:.cpp=.cpp.o) \
-	$(SNIPFILES.GBASP:.snip=.snip.o)
+	$(SNIPFILES.GBASP:.snip=.snip.o) \
+	$(MAPFILES.GBASP:.map=.map.o) \
+	$(MAPBFILES.GBASP:.mapb=.mapb.o) \
+	$(BSAFILES.GBASP:.bsa=.bsa.o) \
+	$(BSETFILES.GBASP:.bset=.bset.o) \
+	$(JASCFILES.GBASP:.jasc=.jasc.o) \
+	$(IMGFILES.GBASP:.png=.png.o)
 
 .L_OFILES.IBMPC := \
 	$(SFILES.IBMPC:.s=.s.o) \
@@ -917,48 +928,61 @@ endif # $(NO_TES)
 	$(call .L_File,S,$@)
 	@$(AS) -o $@ $(ASFLAGS) $(.K_ASDEFINE) $(.K_ASINCLUDE) $<
 
-%.owb.o: %.owb
-	$(call .L_File,OWMAP,$@)
-	@$(OWMAP2O) $< $@
+# Blockset data
+%.bset.o: %.bset
+	$(call .L_File,BIN,$@)
+	@$(BIN2ASM) -s `$(EGMAN) -i $<` $< | $(AS) $(ASFLAGS) -o $@ -
 
-%.owm.o: %.owm
-	$(call .L_File,OWMAP,$@)
-	@$(OWMAP2O) $< $@
+# Blockset attributes
+%.bsa.o: %.bsa
+	$(call .L_File,BIN,$@)
+	@$(BIN2ASM) -s `$(EGMAN) -i $<` $< | $(AS) $(ASFLAGS) -o $@ -
 
+# Map files
+%.map.o: %.map
+	$(call .L_File,BIN,$@)
+	@$(BIN2ASM) -s `$(EGMAN) -i $<` $< | $(AS) $(ASFLAGS) -o $@ -
+
+# Map border files
 %.mapb.o: %.mapb
-	$(call .L_File,MAPB,$@)
-	@$(MAPB2O) $< $@
+	$(call .L_File,BIN,$@)
+	@$(BIN2ASM) -s `$(EGMAN) -i $<` $< | $(AS) $(ASFLAGS) -o $@ -
 
+# Palettes
 %.jasc.o: %.jasc
-	$(call .L_File,PAL,$@)
-	@$(JASC2O) $< $@
+	$(call .L_File,IMG,$@)
+	@$(JASC2BIN) $< | $(BIN2ASM) -s `$(EGMAN) -i $<` - | \
+		$(AS) $(ASFLAGS) -o $@ -
 
+# Text snips
 %.snip.o: %.snip
-#	$(call .L_File,TXT,$@)
+	$(call .L_File,BIN,$@)
 	$(SNIP2BIN) $< | $(BIN2ASM) -s `$(EGMAN) -i $<` - | \
 		$(AS) $(ASFLAGS) -o $@ -
 
+# Scrips
 %.scrip.o: %.scrip
-	$(call .L_File,TXT,$@)
+	$(call .L_File,BIN,$@)
 	@$(SCRIP2O) $< $@
 
+# Image data
 %.png.o: %.png
-	$(call .L_File,GFX,$@)
+	$(call .L_File,IMG,$@)
 	@$(GFX2O) $< $@
 
 # TESfile recipes.
 
 .L_LDFLAGS.TES := -L$(AQ)/lib -ltes
 
-%.cst.tes: %.tes.cst.o $(.L_OFILES)
+%.cst.tes: %.tes.cst.o #$(.L_OFILES)
 	$(call .L_File,LD,$@)
 	@$(LD) $(LDFLAGS) -o $@ $< $(.K_LIB) $(.L_LDFLAGS.TES) $(.L_OFILES)
 
-%.cpp.tes: %.tes.cpp.o $(.L_OFILES)
+%.cpp.tes: %.tes.cpp.o #$(.L_OFILES)
 	$(call .L_File,LD,$@)
 	@$(LD) $(LDFLAGS) -o $@ $< $(.K_LIB) $(.L_LDFLAGS.TES) $(.L_OFILES)
 
-%.c.tes: %.tes.c.o $(.L_OFILES)
+%.c.tes: %.tes.c.o #$(.L_OFILES)
 	$(call .L_File,LD,$@)
 	@$(LD) $(LDFLAGS) -o $@ $< $(.K_LIB) $(.L_LDFLAGS.TES) $(.L_OFILES)
 
