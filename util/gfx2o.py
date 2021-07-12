@@ -58,9 +58,11 @@ def main(args):
 		print(HELP_TEXT)
 		return 0
 	if args[1] == '-':
+		from sys import stderr
 		print('Cannot read from standard input!', file=stderr)
 		return 2
-	name = args[1].split('data/')[-1].split('.', 1)[0].replace('/', '_')
+	egname = run(['mangledeggs', '-i', args[1].split('.', 1)[0] + '.0'])[:-3]
+	#name = args[1].split('data/')[-1].split('.', 1)[0].replace('/', '_')
 	meta = Metadata(args[1])
 	from uuid import uuid4
 	from tempfile import gettempdir
@@ -113,30 +115,26 @@ def main(args):
 	asmfiles = []
 	binfiles = []
 	if meta.img:
-		outname = name + '_img'
+		outname = egname + '_img'
 		if meta.img_lz:
-			outname += '_lz'
-		import bin2asm
-		bin2asm.main(['bin2asm', tmpout + '.img.bin', tmpout + '.img.s', '-s',
-			outname])
+			outname += 'lz'
+		run(['bin2asm', '-s', outname, tmpout + '.img.bin', tmpout + '.img.s'])
 		asmfiles.append(tmpout + '.img.s')
 		binfiles.append(tmpout + '.img.bin')
 	if meta.map:
-		outname = name + '_map'
+		outname = egname + '_map'
 		if meta.map_lz:
-			outname += '_lz'
+			outname += 'lz'
 		import bin2asm
-		bin2asm.main(['bin2asm', tmpout + '.map.bin', tmpout + '.map.s', '-s',
-			outname])
+		run(['bin2asm', '-s', outname, tmpout + '.map.bin', tmpout + '.map.s'])
 		asmfiles.append(tmpout + '.map.s')
 		binfiles.append(tmpout + '.map.bin')
 	if meta.pal:
-		outname = name + '_pal'
+		outname = egname + '_pal'
 		if meta.pal_lz:
-			outname += '_lz'
+			outname += 'lz'
 		import bin2asm
-		bin2asm.main(['bin2asm', tmpout + '.pal.bin', tmpout + '.pal.s', '-s',
-			outname])
+		run(['bin2asm', '-s', outname, tmpout + '.pal.bin', tmpout + '.pal.s'])
 		asmfiles.append(tmpout + '.pal.s')
 		binfiles.append(tmpout + '.pal.bin')
 	outfname = '/dev/stdout'
