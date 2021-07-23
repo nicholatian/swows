@@ -45,8 +45,7 @@ SFILES    := \
 	src/bset/outside.s \
 	src/bset/petalburg.s \
 	src/map/littleroot.s \
-	src/hnam.s \
-	src/map.s
+	src/hnam.s
 CFILES    :=
 CPPFILES  :=
 PUBHFILES :=
@@ -83,6 +82,10 @@ TES_PRVHFILES :=
 SNIP2BIN := $(PY) util/snip2bin.py
 JASC2BIN := $(PY) util/jasc2gba.py
 GFX2O    := $(PY) util/gfx2o.py
+INSERT   := $(PY) util/insert.py
+
+HOOKSFILE := etc/hooks.list
+ROMFILE   := 3rdparty/emer.gba
 
 # this defines all our usual targets
 include etc/targets.mk
