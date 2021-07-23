@@ -12,8 +12,8 @@ blockset_outside:
 	.byte 1 @ is compressed
 	.byte 0 @ is secondary tileset
 	.2byte 0 @ padding
-	.4byte extern_map_tileset_outside_img_lz
+	.4byte egdataExternMapTilesetOutside_imglz
 	.4byte egdataExternMapBlocksetOutside_jasc
 	.4byte egdataExternMapBlocksetOutside_bset
 	.4byte egdataExternMapBlocksetOutside_bsa
-	.4byte InitTilesetAnim_General
+	.4byte InitTilesetAnim_General+1
