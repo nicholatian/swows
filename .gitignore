@@ -29,6 +29,10 @@
 *.sa*
 *.sg*
 *.tar*
+*.png*
+*.jpg
+*.jpeg
+*.gif
 *.pyc
 
 
