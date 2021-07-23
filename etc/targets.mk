@@ -785,6 +785,10 @@ endif
 ## Define the target recipes.
 
 .PHONY: debug release check cov asan ubsan report clean format install
+# Remove all default implicit rules by emptying the suffixes builtin
+# This causes false circular dependencies with multi-dotted file extensions
+#   if we don't do this
+.SUFFIXES:
 
 ## Debug build
 ## useful for: normal testing, valgrind, LLDB
@@ -957,7 +961,7 @@ endif # $(NO_TES)
 # Text snips
 %.snip.o: %.snip
 	$(call .L_File,BIN,$@)
-	$(SNIP2BIN) $< | $(BIN2ASM) -s `$(EGMAN) -i $<` - | \
+	@$(SNIP2BIN) $< | $(BIN2ASM) -s `$(EGMAN) -i $<` - | \
 		$(AS) $(ASFLAGS) -o $@ -
 
 # Scrips
@@ -1033,7 +1037,7 @@ endif
 $(.L_EXETARGET): $(.L_OFILES)
 ifneq ($(strip $(.L_OFILES)),)
 	$(call .L_File,LD,$@)
-	@$(ECHO) $^
+#	@$(ECHO) $^
 	@$(LD) $(LDFLAGS) -o $@ $^ $(.K_LIB)
 	$(call .L_File,STRIP,$@)
 	@$(REALSTRIP) -s $@
@@ -1053,7 +1057,7 @@ ifeq ($(TP),GBA)
 endif
 ifeq ($(TP),GBASP)
 	$(call .L_File,FIX,$@)
-	@$(PY) util/insert.py etc/hooks.list 3rdparty/emer.gba \
+	@$(INSERT) $(HOOKSFILE) $(ROMFILE) \
 		$(PROJECT).bin $(PROJECT).elf $(PROJECT).gba
 endif
 endif
