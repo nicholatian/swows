@@ -14,6 +14,6 @@ blockset_outside:
 	.2byte 0 @ padding
 	.4byte egdataExternMapTilesetOutside_imglz
 	.4byte egdataExternMapBlocksetOutside_jasc
-	.4byte egdataExternMapBlocksetOutside_bset
-	.4byte egdataExternMapBlocksetOutside_bsa
+	.4byte egdataExternMapBlocksetOutside_bset @ $3960F0
+	.4byte egdataExternMapBlocksetOutside_bsa  @ $3980F0
 	.4byte InitTilesetAnim_General+1

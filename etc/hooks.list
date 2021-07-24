@@ -11,8 +11,8 @@
 0x31DE0 = word: names_m
 0x31E10 = word: names_f
 
-0x481DF8 = word: layout_littleroot
-0x4825B4 = word: layout_littleroot
+0x481DF8 = word: mapfooter_littleroot
+0x485D60 = word: mapheader_littleroot
 
 # blockset outside (238 occurrences)
 0x3E0534 = word: blockset_outside
