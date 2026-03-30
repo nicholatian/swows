@@ -45,6 +45,8 @@ public override void activate( )
 	{
 		content_width = 960, content_height = 540
 	};
+
+	this.area.set_draw_func( this.redraw );
 }
 }
 
