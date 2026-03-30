@@ -35,27 +35,34 @@ def parse_map(text):
 	ret = []
 	import re
 	sym_expr = re.compile(r'[A-Za-z_][A-Za-z0-9_]*')
-	offs_expr = re.compile(r'0x[A-Fa-f0-9]{16}')
+	offs_expr = re.compile(r'[A-Fa-f0-9]+')
 	text = re.sub(r'[ \t\v\f\r]+', ' ', text)
 	lines = text.splitlines()
 	lines_sz = len(lines)
 	i = 0
 	while i < lines_sz:
-		fields = lines[i].lstrip(' \t\v\f\r').rstrip(' \t\v\f\r').split(' ')
+		fields = lines[i].split(' ')
+		fields_sz = len(fields)
 		i += 1
-		if offs_expr.match(fields[0]) == None:
+		if sym_expr.match(fields[0]) == None:
 			continue
-		if sym_expr.match(fields[1]) == None:
+		if offs_expr.match(fields[2]) == None:
 			continue
-		ret.append((fields[1], int(fields[0], 16)))
+		sz = 0
+		if fields_sz >= 4:
+			if offs_expr.match(fields[3]) == None:
+				continue
+			sz = int(fields[3], 16)
+		ret.append((fields[0], int(fields[2], 16), sz))
 	return ret
 
 def list2csv(lis, write_heading):
-	ret = 'symbol,value\n' if write_heading else ''
+	ret = 'symbol,value,size\n' if write_heading else ''
 	lis_sz = len(lis)
 	i = 0
 	while i < lis_sz:
-		ret += lis[i][0] + ',' + ('0x%X' % lis[i][1]) + '\n'
+		ret += lis[i][0] + ',' + ('$%X' % lis[i][1]) + ',' + \
+			('0x%X' % lis[i][2]) + '\n'
 		i += 1
 	return ret
 
