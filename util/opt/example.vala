@@ -38,12 +38,12 @@ public override void activate( )
 {
 	this.window = new Gtk.ApplicationWindow( this )
 	{
-		title = "SablMap", default_width = 800, default_height = 600
+		title = "SablMap", default_width = 960, default_height = 540
 	};
 
 	this.area = new Gtk.DrawingArea( )
 	{
-		content_width = 800, content_height = 600
+		content_width = 960, content_height = 540
 	};
 }
 }
