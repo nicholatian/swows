@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-##############################################################################
-##                              POKeMON SwowS!                              ##
-##                                                                          ##
-##                   Copyright (C) 2021 Alexander Nicholi                   ##
-##                       Released under BSD-0-Clause.                       ##
-##############################################################################
+########################################################################
+##                           POKeMON SwowS!                           ##
+##                                                                    ##
+##                Copyright (C) 2021 Alexander Nicholi                ##
+##                    Released under BSD-0-Clause.                    ##
+########################################################################
 
 HELP_TEXT = '''
 Symbol CSV table to linker script
@@ -36,7 +36,9 @@ def csv2lis(text, silent):
 		fields = lines[i].split(',')
 		if len(fields) != 2:
 			if not silent:
-				print2('Wrong number of columns on line %s of CSV!' % (i, 10))
+				s0 = 'Wrong number of columns on line '
+				s0 += '%s of CSV!' % str(i, 10)
+				print2(s0)
 			return []
 		ret.append([fields[0], fields[1]])
 		i += 1
@@ -70,17 +72,21 @@ def main(args):
 			elif args[i] == '-S' or args[i] == '--strict':
 				pass # handled above
 			elif not silent:
-				print2('WARNING: Unknown flag \u2018%s\u2019' % args[i])
+				print2(
+				'WARNING: Unknown flag \u2018%s\u2019' %
+				args[i])
 		elif infile == '':
 			infile = args[i]
 		elif outfile == '':
 			outfile = args[i]
 		elif not silent:
-			print2('WARNING: Unknown flag \u2018%s\u2019' % args[i])
+			print2('WARNING: Unknown flag \u2018%s\u2019' %
+			args[i])
 		i += 1
 	if infile == '':
 		if not silent:
-			print2('Insufficient parameters specified. Exiting...')
+			print2(
+			'Insufficient parameters specified. Exiting...')
 		return 127
 	text = ''
 	if infile == '-':
@@ -91,8 +97,11 @@ def main(args):
 		r = chkascii.bad_ascii(block, blocksz, False)
 		if r < blocksz:
 			if not silent:
-				print2('Invalid octet at offset $%X: 0x%02X is not valid ASCII' %
-					(r, block[r]))
+				s0 = 'Invalid octet at offset $%X' + r
+				s0 += '%X' % r
+				s0 += ': 0x%02X is not valid' + block[r]
+				s0 += ' ASCII'
+				print2(s0)
 			return 127
 		text = block.decode('utf-8')
 	else:
@@ -103,8 +112,11 @@ def main(args):
 		r = chkascii.bad_ascii(block, blocksz, False)
 		if r < blocksz:
 			if not silent:
-				print2('Invalid octet at offset $%X: 0x%02X is not valid ASCII' %
-					(r, block[r]))
+				s0 = 'Invalid octet at offset $%X' + r
+				s0 += '%X' % r
+				s0 += ': 0x%02X is not valid' + block[r]
+				s0 += ' ASCII'
+				print2(s0)
 			return 127
 		text = block.decode('utf-8')
 	output = lis2ld(csv2lis(text, silent))
@@ -113,12 +125,16 @@ def main(args):
 		from sys import stdout
 		r = stdout.buffer.write(output)
 		if r < output_sz and not silent:
-			print2('WARNING: Some of the output did not make it through')
+			print2(
+			'WARNING: Some of the output did not make it ' +
+			'through')
 	else:
 		f = open(outfile, 'wb')
 		r = f.write(output)
 		if r < output_sz and not silent:
-			print2('WARNING: Some of the output did not make it through')
+			print2(
+			'WARNING: Some of the output did not make it ' +
+			'through')
 		f.close()
 	return 0
 

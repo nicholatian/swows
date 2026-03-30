@@ -1,7 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-HELP_TEXT = 'JASC <-> GBA 15-bit binary\n\nUsage:\n    \n    jasc2gba.py [options] <input> [output]\n    Takes JASC palette and converts it to GBA binary-compatible 15-bit colour.\n    If <input> is - then standard input is read.\n\nOptions:\n    -b  Force input to be RGB555 binary instead of JASC.\n'
+HELP_TEXT = '''
+JASC <-> GBA 15-bit binary
+
+Usage:
+
+    jasc2gba.py [options] <input> [output]
+    Takes JASC palette and converts it to GBA binary-compatible 15-bit
+    colour.
+    If <input> is - then standard input is read.\n\nOptions:
+    -b  Force input to be RGB555 binary instead of JASC.
+'''
 
 from sys import stderr
 
@@ -11,8 +21,9 @@ def convertback(bin):
 	i = 0
 	binlen = len(bin)
 	if binlen % 2 != 0:
-		print('Odd byte count in file, perhaps it is corrupt. Exiting...',
-			file=stderr)
+		print(
+		'Odd byte count in file; perhaps it is corrupt. ' +
+		'Exiting...', file=stderr)
 		return ''
 	out += str(int(binlen / 2)) + '\n'
 	while i < binlen:
@@ -35,7 +46,8 @@ def convert(text):
 		col = line.split(' ', 2)
 		if len(col) != 3:
 			print(line)
-			print('Warning: invalid colour "' + str(col) + '"', file=stderr)
+			print('Warning: invalid colour "' + str(col) +
+			'"', file=stderr)
 			continue
 		r = (int(col[0]) & 0xFF) >> 3
 		g = (int(col[1]) & 0xFF) >> 3
@@ -47,7 +59,8 @@ def convert(text):
 
 def main(args):
 	argc = len(args)
-	if argc <= 1 or (argc == 2 and (args[1] == '--help' or args[1] == '-h')):
+	if argc <= 1 or (argc == 2 and (args[1] == '--help' or \
+	args[1] == '-h')):
 		print(HELP_TEXT)
 		return 0
 	infile = None

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-##############################################################################
-##                              POKeMON SwowS!                              ##
-##                                                                          ##
-##                   Copyright (C) 2021 Alexander Nicholi                   ##
-##                       Released under BSD-0-Clause.                       ##
-##############################################################################
+########################################################################
+##                           POKeMON SwowS!                           ##
+##                                                                    ##
+##                Copyright (C) 2021 Alexander Nicholi                ##
+##                    Released under BSD-0-Clause.                    ##
+########################################################################
 
 from typing import List
 
@@ -59,8 +59,12 @@ def is_invalid(filename, allow_nul, silent):
 		super_i += curblocksz
 		if r < curblocksz:
 			if not silent:
-				print2('Invalid octet at offset $%X: 0x%02X is not valid ASCII' %
-				(super_i, block[r]))
+				s0 = 'Invalid octet at offset $%X' + \
+					super_i
+				s0 += '%X' % super_i
+				s0 += ': 0x%02X is not valid' + block[r]
+				s0 += ' ASCII'
+				print2(s0)
 			fail = True
 			break
 	f.close()
@@ -83,7 +87,9 @@ def main(args : List[str]):
 			elif args[i] == '-0' or args[i] == '--zero':
 				allow_nul = True
 			elif not silent:
-				print2('WARNING: Unknown flag \u2018%s\u2019' % args[i])
+				print2(
+				'WARNING: Unknown flag \u2018%s\u2019' %
+				args[i])
 		else:
 			files.append(args[i])
 		i += 1
@@ -93,7 +99,9 @@ def main(args : List[str]):
 		r = is_invalid(files[i], allow_nul, silent)
 		if r == True:
 			if not silent:
-				print2('Check failed on file \u2018%s\u2019!' % files[i])
+				print2(
+				'Check failed on file \u2018%s\u2019!' %
+				files[i])
 			return 1
 		i += 1
 	if sz > 0:
@@ -102,7 +110,8 @@ def main(args : List[str]):
 		return 0
 	else:
 		if not silent:
-			print2('WARNING: No input files provided. Exiting...')
+			print2(
+			'WARNING: No input files provided. Exiting...')
 		return 127
 
 if __name__ == '__main__':

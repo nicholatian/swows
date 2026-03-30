@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-##############################################################################
-##                              POKeMON SwowS!                              ##
-##                                                                          ##
-##                   Copyright (C) 2021 Alexander Nicholi                   ##
-##                       Released under BSD-0-Clause.                       ##
-##############################################################################
+########################################################################
+##                           POKeMON SwowS!                           ##
+##                                                                    ##
+##                Copyright (C) 2021 Alexander Nicholi                ##
+##                    Released under BSD-0-Clause.                    ##
+########################################################################
 
 from os import linesep
 from sys import argv, exit, stderr
@@ -53,9 +53,12 @@ def getHooks(hooksfile, objfile):
 		if '=' not in newline:
 			# not dealing with a pair, check it
 			for char in newline:
-				# only whitespace is permitted outside comments and pairs
+				# only whitespace is permitted outside
+				# comments and pairs
 				if char != ' ' and char != '\t':
-					raise Exception('Malformed syntax on line ' + str(lnum + 1))
+					raise Exception(
+					'Malformed syntax on line ' +
+					str(lnum + 1))
 			# don't try to parse this, there's nothing here
 			continue
 		pair = newline.split('=', 1)
@@ -63,13 +66,18 @@ def getHooks(hooksfile, objfile):
 		pair[0] = pair[0].replace(' ', '')
 		pair[1] = pair[1].replace(' ', '')
 		if pair[0] == '' or pair[1] == '':
-			# either the key name or value (or both) are empty
-			raise Exception('Bad key/value pair on line ' + str(lnum + 1))
+			# either the key name or value (or both) are
+			# empty
+			raise Exception(
+			'Bad key/value pair on line ' + str(lnum + 1))
 		# detach the symbol lengths from their names
 		subpair = pair[1].split(':', 1)
 		# ensure the given type is a valid one
-		if subpair[0] != 'word' and subpair[0] != 'hword' and subpair[0] != 'byte':
-			raise Exception('Invalid type for value on line ' + str(lnum + 1))
+		if subpair[0] != 'word' and subpair[0] != 'hword' and \
+		subpair[0] != 'byte':
+			raise Exception(
+			'Invalid type for value on line ' +
+			str(lnum + 1))
 		# perform one-time right-hand arithmetic if requested
 		name = None
 		if '^' in subpair[1]:
@@ -115,10 +123,11 @@ def getHooks(hooksfile, objfile):
 		offsets += [int(pair[0], 16)]
 		widths  += [subpair[0]]
 		names   += [name]
-	
+
 	# get the values of the symbols and store them
 	values = []
-	nmout  = run(['arm-none-eabi-nm', '-nPS', objfile]).split(linesep)
+	nmout  = run(['arm-none-eabi-nm', '-nPS',
+		objfile]).split(linesep)
 	for index, name in enumerate(names):
 		foundparts = []
 		# run through the output of arm-none-eabi-nm
@@ -139,15 +148,19 @@ def getHooks(hooksfile, objfile):
 			i = 0
 			while i < len(parts):
 				if parts[i] == '':
-					parts = parts[:i] + parts[i + 1:]
+					parts = parts[:i] + \
+						parts[i + 1:]
 				else:
 					i += 1
 			count = len(parts)
 			# ensure it's within normal bounds
 			if count < 2 or count > 4:
-				raise Exception('Strange number of items on line ' +
-					str(lnum + 1) + ' of arm-none-eabi-nm\u2019s output: \u201C' +
-					str(parts) + '\u201D')
+				raise Exception(
+					'Strange number of items on ' +
+					'line ' + str(lnum + 1) + \
+					' of arm-none-eabi-nm\u2019s ' +
+					'output: \u201C' + str(parts) +
+					'\u201D')
 			# ignore length fields
 			if count == 4:
 				parts = parts[:3]
@@ -157,11 +170,13 @@ def getHooks(hooksfile, objfile):
 				foundparts += [parts]
 		if len(foundparts) == 0:
 			# didn't find any matches
-			raise Exception('Symbol \u201C' + name + '\u201D defined in hooks ' +
-				'list, but not found in output object code')
+			raise Exception('Symbol \u201C' + name +
+				'\u201D defined in hooks list, but ' +
+				'not found in output object code')
 		addrs = []
 		# go through what we found
-		# ignore addressless lists as they're probably undefined dups
+		# ignore addressless lists as they're probably undefined
+		# dups
 		for parts in foundparts:
 			if len(parts) == 2:
 				continue
@@ -182,13 +197,20 @@ def getHooks(hooksfile, objfile):
 			elif ops[index] == '+':
 				addr += opvals[index]
 			else:
-				raise Exception('An arithmetic operation must be performed on the address. This is most likely a problem with the source.')
+				raise Exception(
+				'An arithmetic operation must be ' +
+				'performed on the address. This is ' +
+				'most likely a problem with the ' +
+				'source.')
 			addrs += [addr]
 		if len(addrs) != 1:
 			# there can only be One
-			raise Exception('Multiple addresses found for symbol ' + name)
+			raise Exception(
+				'Multiple addresses found for symbol '
+				+ name)
 		values += [addrs[0]]
-	# run through the list once more to objectify everything and store it
+	# run through the list once more to objectify everything and
+	# store it
 	for index, width in enumerate(widths):
 		sizesym = 'I'
 		if width == 'hword':

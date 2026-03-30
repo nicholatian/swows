@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-##############################################################################
-##                              POKeMON SwowS!                              ##
-##                                                                          ##
-##                   Copyright (C) 2021 Alexander Nicholi                   ##
-##                       Released under BSD-0-Clause.                       ##
-##############################################################################
+########################################################################
+##                           POKeMON SwowS!                           ##
+##                                                                    ##
+##                Copyright (C) 2021 Alexander Nicholi                ##
+##                    Released under BSD-0-Clause.                    ##
+########################################################################
 
 from typing import List
 
@@ -40,7 +40,8 @@ def convert(data : bytes, blockmode : bool, silent : bool):
 	line_i = 0
 	if data_sz & 1 != 0:
 		if not silent:
-			print2('WARNING: map binary has odd number of bytes. Truncating...')
+			print2('WARNING: map binary has odd number of' +
+			' bytes. Truncating...')
 		data_sz -= 1
 	i = 0
 	while i < data_sz:
@@ -84,7 +85,9 @@ def main(args):
 				if not silent: print2(HELP_TEXT)
 				return 0
 			elif not silent:
-				print2('WARNING: Unknown flag \u2018%s\u2019' % args[i])
+				print2(
+				'WARNING: Unknown flag \u2018%s\u2019' %
+				args[i])
 		elif i == 1:
 			if args[1] == 'b':
 				blockmode = True
@@ -92,7 +95,8 @@ def main(args):
 				blockmode = False
 			else:
 				if not silent:
-					print2('Invalid output mode \u2018%s\u2019 given. Exiting...'
+					print2(
+					'Bad output mode %s. Exiting...'
 					% args[1])
 				return 127
 		elif infile == '':
@@ -100,11 +104,13 @@ def main(args):
 		elif outfile == '':
 			outfile = args[i]
 		elif not silent:
-			print2('WARNING: Unknown flag \u2018%s\u2019' % args[i])
+			print2('WARNING: Unknown flag \u2018%s\u2019' %
+			args[i])
 		i += 1
 	if infile == '':
 		if not silent:
-			print2('Insufficient parameters specified. Exiting...')
+			print2('Insufficient parameters specified.' +
+			'Exiting...')
 		return 127
 	out: str = ''
 	if infile == '-':

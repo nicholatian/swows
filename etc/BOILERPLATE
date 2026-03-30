@@ -1,19 +1,20 @@
-This file contains the project's copypastable boilerplate comment headers.
+This file contains the project's copypastable boilerplate comment
+headers.
 
 Boilerplate for C-like languages:
 
-/****************************************************************************\
- *                              POKeMON SwowS!                              *
- *                                                                          *
- *                   Copyright (C) 2021 Alexander Nicholi                   *
- *                       Released under BSD-0-Clause.                       *
-\****************************************************************************/
+/**********************************************************************\
+ *                           POKeMON SwowS!                           *
+ *                                                                    *
+ *                Copyright (C) 2021 Alexander Nicholi                *
+ *                    Released under BSD-0-Clause.                    *
+\**********************************************************************/
 
 Hash-based boilerplate (Python, POSIX shell, Makefile):
 
-##############################################################################
-##                              POKeMON SwowS!                              ##
-##                                                                          ##
-##                   Copyright (C) 2021 Alexander Nicholi                   ##
-##                       Released under BSD-0-Clause.                       ##
-##############################################################################
+########################################################################
+##                           POKeMON SwowS!                           ##
+##                                                                    ##
+##                Copyright (C) 2021 Alexander Nicholi                ##
+##                    Released under BSD-0-Clause.                    ##
+########################################################################

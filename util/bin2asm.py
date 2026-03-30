@@ -1,14 +1,28 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-HELP_TEXT = 'Binary to assembly converter\n\nUsage:\n    \n    bin2asm.py [options] <input> [output]\n    Takes the binary file <input> and converts it to its GNU assembly equivalent.\n    If <input> is - then standard input is read.\n\nOptions:\n    -s <sym>  Specify symbol name to assign the data. Useful when reading from stdin.\n'
+HELP_TEXT = '''
+Binary to assembly converter
+
+Usage:
+
+    bin2asm.py [options] <input> [output]
+    Takes the binary file <input> and converts it to its GNU assembly
+    equivalent.
+    If <input> is - then standard input is read.
+
+    Options:
+    -s <sym>  Specify symbol name to assign the data.
+              Useful when reading from stdin.
+'''
 
 def run(cmd):
 	from subprocess import check_output
 	return check_output(cmd).decode()
 
 def convert(inbuf, sym):
-	out = '\n.balign 4, 0\n.globl ' + sym + '\n' + sym + ':\n\t.byte '
+	out = '\n.balign 4, 0\n.globl ' + sym + '\n' + sym + \
+		':\n\t.byte '
 	li = 0
 	for byte in inbuf:
 		strbyte = hex(byte).upper()
@@ -24,7 +38,8 @@ def convert(inbuf, sym):
 
 def main(args):
 	argc = len(args)
-	if argc <= 1 or (argc == 2 and (args[1] == '--help' or args[1] == '-h')):
+	if argc <= 1 or (argc == 2 and (args[1] == '--help' or \
+	args[1] == '-h')):
 		print(HELP_TEXT)
 		return 0
 	sym = ''
@@ -40,7 +55,9 @@ def main(args):
 	while i < argc:
 		if args[i] == '-s':
 			if i + 1 >= argc:
-				print('No positional arg for -s provided', file=stderr)
+				print(
+				'No positional arg for -s provided',
+				file=stderr)
 				return 2
 			sym = args[i + 1]
 			break

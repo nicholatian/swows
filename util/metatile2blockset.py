@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-##############################################################################
-##                              POKeMON SwowS!                              ##
-##                                                                          ##
-##                   Copyright (C) 2021 Alexander Nicholi                   ##
-##                       Released under BSD-0-Clause.                       ##
-##############################################################################
+########################################################################
+##                           POKeMON SwowS!                           ##
+##                                                                    ##
+##                Copyright (C) 2021 Alexander Nicholi                ##
+##                    Released under BSD-0-Clause.                    ##
+########################################################################
 
 from typing import List, Dict
 
@@ -42,15 +42,17 @@ class INI:
 	def _getbool(self, section : str, key : str):
 		input: str = self.d[section][key]
 		intval: int = int(input, 0)
-		if input == 'true' or input == 'True' or input == 'TRUE' or \
-		input == 'y' or input == 'Y' or input == 'yes' or input == 'Yes' or \
-		input == 'YES' or input == 'on' or input == 'On' or input == 'ON' or \
-			intval == 1:
+		if input == 'true' or input == 'True' or \
+		input == 'TRUE' or input == 'y' or input == 'Y' or \
+		input == 'yes' or input == 'Yes' or input == 'YES' or \
+		input == 'on' or input == 'On' or input == 'ON' or \
+		intval == 1:
 			return 1
-		elif input == 'false' or input == 'False' or input == 'FALSE' or \
-		input == 'n' or input == 'N' or input == 'no' or input == 'No' or \
-		input == 'NO' or input == 'off' or input == 'Off' or input == 'OFF' or \
-			intval == 0:
+		elif input == 'false' or input == 'False' or \
+		input == 'FALSE' or input == 'n' or input == 'N' or \
+		input == 'no' or input == 'No' or input == 'NO' or \
+		input == 'off' or input == 'Off' or input == 'OFF' or \
+		intval == 0:
 			return 0
 		else: return -1
 	def readval(self, section : str, key : str):
@@ -106,7 +108,8 @@ class INI:
 				assert(s[-1] == ']')
 				cur_s = s[1:-1]
 				ret[cur_s] = {}
-				# done parsing now. don't look for a keypair that isn't here
+				# done parsing now. don't look for a
+				# keypair that isn't here
 				i += 1
 				continue
 			elif '=' not in line:
@@ -115,14 +118,19 @@ class INI:
 				j = 0
 				while j < line_sz:
 					ch = line[j]
-					# only whitespace is permitted outside of comments and keypairs
-					assert(ch == ' ' or ch == '\t' or ch == '\v' or ch == '\f' or
-						ch == '\r')
+					# only whitespace is permitted
+					# outside of comments and
+					# keypairs
+					assert(ch == ' ' or ch == '\t'
+					or ch == '\v' or ch == '\f' or
+					ch == '\r')
 					j += 1
-				# don't try to parse this, there's nothing here
+				# don't try to parse this, there's
+				# nothing here
 				i += 1
 				continue
-			# NOTE: no whitespace stripping is done. this is deliberate
+			# NOTE: no whitespace stripping is done. this is
+			# deliberate
 			p = line.split('=', 1)
 			key = p[0]
 			val = p[1]
@@ -140,7 +148,8 @@ class INI:
 				continue
 			r += '[' + section + ']\n'
 			for key in self.d[section]:
-				r += key + '=' + self.d[section][key] + '\n'
+				r += key + '=' + self.d[section][key] \
+					+ '\n'
 			r += '\n'
 		return r
 
@@ -160,42 +169,50 @@ def convert(data : bytes):
 		# parse tiles
 		fields: List[str] = [''] * 32
 		fields[0] = '0x' + hex(int(data[i * 16]) | \
-			(int(data[(i * 16) + 1] & 0x3) << 8))[2:].upper()
+			(int(data[(i * 16) + 1] & 0x3) <<
+			8))[2:].upper()
 		fields[1] = str(int(data[(i * 16) + 1]) >> 4)
 		fields[2] = str((int(data[(i * 16) + 1]) >> 2) & 1)
 		fields[3] = str((int(data[(i * 16) + 1]) >> 3) & 1)
 		fields[4] = '0x' + hex(int(data[(i * 16) + 2]) | \
-			(int(data[(i * 16) + 3] & 0x3) << 8))[2:].upper()
+			(int(data[(i * 16) + 3] & 0x3) <<
+			8))[2:].upper()
 		fields[5] = str(int(data[(i * 16) + 3]) >> 4)
 		fields[6] = str((int(data[(i * 16) + 3]) >> 2) & 1)
 		fields[7] = str((int(data[(i * 16) + 3]) >> 3) & 1)
 		fields[8] = '0x' + hex(int(data[(i * 16) + 4]) | \
-			(int(data[(i * 16) + 5] & 0x3) << 8))[2:].upper()
+			(int(data[(i * 16) + 5] & 0x3) <<
+			8))[2:].upper()
 		fields[9] = str(int(data[(i * 16) + 5]) >> 4)
 		fields[10] = str((int(data[(i * 16) + 5]) >> 2) & 1)
 		fields[11] = str((int(data[(i * 16) + 5]) >> 3) & 1)
 		fields[12] = '0x' + hex(int(data[(i * 16) + 6]) | \
-			(int(data[(i * 16) + 7] & 0x3) << 8))[2:].upper()
+			(int(data[(i * 16) + 7] & 0x3) <<
+			8))[2:].upper()
 		fields[13] = str(int(data[(i * 16) + 7]) >> 4)
 		fields[14] = str((int(data[(i * 16) + 7]) >> 2) & 1)
 		fields[15] = str((int(data[(i * 16) + 7]) >> 3) & 1)
 		fields[16] = '0x' + hex(int(data[(i * 16) + 8]) | \
-			(int(data[(i * 16) + 9] & 0x3) << 8))[2:].upper()
+			(int(data[(i * 16) + 9] & 0x3) <<
+			8))[2:].upper()
 		fields[17] = str(int(data[(i * 16) + 9]) >> 4)
 		fields[18] = str((int(data[(i * 16) + 9]) >> 2) & 1)
 		fields[19] = str((int(data[(i * 16) + 9]) >> 3) & 1)
 		fields[20] = '0x' + hex(int(data[(i * 16) + 10]) | \
-			(int(data[(i * 16) + 11] & 0x3) << 8))[2:].upper()
+			(int(data[(i * 16) + 11] & 0x3) <<
+			8))[2:].upper()
 		fields[21] = str(int(data[(i * 16) + 11]) >> 4)
 		fields[22] = str((int(data[(i * 16) + 11]) >> 2) & 1)
 		fields[23] = str((int(data[(i * 16) + 11]) >> 3) & 1)
 		fields[24] = '0x' + hex(int(data[(i * 16) + 12]) | \
-			(int(data[(i * 16) + 13] & 0x3) << 8))[2:].upper()
+			(int(data[(i * 16) + 13] & 0x3) <<
+			8))[2:].upper()
 		fields[25] = str(int(data[(i * 16) + 13]) >> 4)
 		fields[26] = str((int(data[(i * 16) + 13]) >> 2) & 1)
 		fields[27] = str((int(data[(i * 16) + 13]) >> 3) & 1)
 		fields[28] = '0x' + hex(int(data[(i * 16) + 14]) | \
-			(int(data[(i * 16) + 15] & 0x3) << 8))[2:].upper()
+			(int(data[(i * 16) + 15] & 0x3) <<
+			8))[2:].upper()
 		fields[29] = str(int(data[(i * 16) + 15]) >> 4)
 		fields[30] = str((int(data[(i * 16) + 15]) >> 2) & 1)
 		fields[31] = str((int(data[(i * 16) + 15]) >> 3) & 1)
@@ -253,17 +270,21 @@ def main(args):
 				if not silent: print2(HELP_TEXT)
 				return 0
 			elif not silent:
-				print2('WARNING: Unknown flag \u2018%s\u2019' % args[i])
+				print2(
+				'WARNING: Unknown flag \u2018%s\u2019' %
+				args[i])
 		elif infile == '':
 			infile = args[i]
 		elif outfile == '':
 			outfile = args[i]
 		elif not silent:
-			print2('WARNING: Unknown flag \u2018%s\u2019' % args[i])
+			print2('WARNING: Unknown flag \u2018%s\u2019' %
+			args[i])
 		i += 1
 	if infile == '':
 		if not silent:
-			print2('Insufficient parameters specified. Exiting...')
+			print2('Insufficient parameters specified. ' +
+			'Exiting...')
 		return 127
 	out: str = ''
 	if infile == '-':

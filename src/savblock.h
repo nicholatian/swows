@@ -1,9 +1,9 @@
-/****************************************************************************\
- *                              POKeMON SwowS!                              *
- *                                                                          *
- *                   Copyright (C) 2021 Alexander Nicholi                   *
- *                       Released under BSD-0-Clause.                       *
-\****************************************************************************/
+/**********************************************************************\
+ *                           POKeMON SwowS!                           *
+ *                                                                    *
+ *                Copyright (C) 2021 Alexander Nicholi                *
+ *                    Released under BSD-0-Clause.                    *
+\**********************************************************************/
 
 #ifndef INC__SWOWS_SAVBLOCK_H
 #define INC__SWOWS_SAVBLOCK_H

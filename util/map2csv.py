@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-##############################################################################
-##                              POKeMON SwowS!                              ##
-##                                                                          ##
-##                   Copyright (C) 2021 Alexander Nicholi                   ##
-##                       Released under BSD-0-Clause.                       ##
-##############################################################################
+########################################################################
+##                           POKeMON SwowS!                           ##
+##                                                                    ##
+##                Copyright (C) 2021 Alexander Nicholi                ##
+##                    Released under BSD-0-Clause.                    ##
+########################################################################
 
 HELP_TEXT = '''
 Symbol map to CSV
@@ -86,17 +86,20 @@ def main(args):
 			elif args[i] == '-S' or args[i] == '--strict':
 				pass # handled above
 			elif not silent:
-				print2('WARNING: Unknown flag \u2018%s\u2019' % args[i])
+				print2('WARNING: Unknown flag \u2018%s'
+				+ '\u2019' % args[i])
 		elif infile == '':
 			infile = args[i]
 		elif outfile == '':
 			outfile = args[i]
 		elif not silent:
-			print2('WARNING: Unknown flag \u2018%s\u2019' % args[i])
+			print2('WARNING: Unknown flag \u2018%s\u2019' %
+			args[i])
 		i += 1
 	if infile == '':
 		if not silent:
-			print2('Insufficient parameters specified. Exiting...')
+			print2('Insufficient parameters specified.' +
+			'Exiting...')
 		return 127
 	text = ''
 	if infile == '-':
@@ -107,7 +110,8 @@ def main(args):
 		r = chkascii.bad_ascii(block, blocksz, False)
 		if r < blocksz:
 			if not silent:
-				print2('Invalid octet at offset $%X: 0x%02X is not valid ASCII' %
+				print2('Invalid octet at offset $%X: ' +
+				'0x%02X is not valid ASCII' %
 					(r, block[r]))
 			return 127
 		text = block.decode('utf-8')
@@ -119,7 +123,8 @@ def main(args):
 		r = chkascii.bad_ascii(block, blocksz, False)
 		if r < blocksz:
 			if not silent:
-				print2('Invalid octet at offset $%X: 0x%02X is not valid ASCII' %
+				print2('Invalid octet at offset $%X: ' +
+				'0x%02X is not valid ASCII' %
 					(r, block[r]))
 			return 127
 		text = block.decode('utf-8')
@@ -130,18 +135,21 @@ def main(args):
 	if r < output_sz:
 		if not silent:
 			print2('CSV output is invalid!')
-			print2('This is probably an issue with map2csv. Exiting...')
+			print2('This is probably an issue with ' +
+			'map2csv. Exiting...')
 		return 127
 	if outfile == '':
 		from sys import stdout
 		r = stdout.buffer.write(output)
 		if r < output_sz and not silent:
-			print2('WARNING: Some of the output did not make it through')
+			print2('WARNING: Some of the output did not ' +
+			'make it through')
 	else:
 		f = open(outfile, 'wb')
 		r = f.write(output)
 		if r < output_sz and not silent:
-			print2('WARNING: Some of the output did not make it through')
+			print2('WARNING: Some of the output did not ' +
+			'make it through')
 		f.close()
 	return 0
 

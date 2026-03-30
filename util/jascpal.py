@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-##############################################################################
-##                              POKeMON SwowS!                              ##
-##                                                                          ##
-##                   Copyright (C) 2021 Alexander Nicholi                   ##
-##                       Released under BSD-0-Clause.                       ##
-##############################################################################
+########################################################################
+##                           POKeMON SwowS!                           ##
+##                                                                    ##
+##                Copyright (C) 2021 Alexander Nicholi                ##
+##                    Released under BSD-0-Clause.                    ##
+########################################################################
 
 from typing import List
 
@@ -27,10 +27,12 @@ def from_text(text : str, silent : bool):
 		if not silent: print2('Bad magic bytes header')
 		return []
 	if lines[1] != '0100':
-		if not silent: print2('WARNING: Unsupported version ' + lines[1])
+		if not silent: print2('WARNING: Unsupported version ' +
+			lines[1])
 	count = int(lines[2], 10)
 	if lines_sz - 3 < count:
-		if not silent: print2('Too few lines for %s colours' % lines[2])
+		if not silent: print2('Too few lines for %s colours' %
+			lines[2])
 	i = 3
 	ret = []
 	while i < lines_sz:
@@ -45,26 +47,36 @@ def from_text(text : str, silent : bool):
 		fields_sz = len(fields)
 		if fields_sz < 3:
 			if not silent:
-				print2('Too few colours on line %s (need 3)' % int(i + 1))
+				print2(
+				'Too few colours on line %s (need 3)' %
+				int(i + 1))
 			return []
 		if fields_sz > 3:
 			if not silent:
-				print2('Too many colours on line %s (need 3)' % int(i + 1))
+				print2(
+				'Too many colours on line %s (need 3)' %
+				int(i + 1))
 			return []
 		r = int(fields[0], 10)
 		g = int(fields[1], 10)
 		b = int(fields[2], 10)
 		if r < 0 or r > 255:
 			if not silent:
-				print2('Red channel out of bounds (was %s)' % fields[0])
+				print2(
+				'Red channel out of bounds (was %s)' %
+				fields[0])
 			return []
 		if g < 0 or g > 255:
 			if not silent:
-				print2('Green channel out of bounds (was %s)' % fields[1])
+				print2(
+				'Green channel out of bounds (was %s)' %
+				fields[1])
 			return []
 		if b < 0 or b > 255:
 			if not silent:
-				print2('Blue channel out of bounds (was %s)' % fields[2])
+				print2(
+				'Blue channel out of bounds (was %s)' %
+				fields[2])
 			return []
 		ret.append([r, g, b])
 		i += 1
@@ -78,8 +90,9 @@ def from_file(fpath : str, silent : bool):
 	ascii_i = chkascii.bad_ascii(raw, raw_sz, False)
 	if ascii_i < raw_sz:
 		if not silent:
-			print2('Invalid octet at offset $%X: 0x%02X is not valid ASCII' %
-				(ascii_i, raw[ascii_i]))
+			s0 = 'Invalid octet at offset $%X: ' % ascii_i
+			s0 += '0x%02X is not valid ASCII' % raw[ascii_i]
+			print2(s0)
 		return []
 	text = raw.decode('utf-8')
 	f.close()
@@ -111,7 +124,9 @@ def main(args : List[str]):
 			if args[i] == '-s' or args[i] == '--silent':
 				pass # handled above
 			elif not silent:
-				print2('WARNING: Unknown flag \u2018%s\u2019' % args[i])
+				print2(
+				'WARNING: Unknown flag \u2018%s\u2019' %
+				args[i])
 		else:
 			files.append(args[i])
 		i += 1
