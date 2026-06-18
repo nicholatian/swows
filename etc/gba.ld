@@ -23,7 +23,7 @@ SECTIONS
 	.text :
 	{
 		FILL (0xABCD)
-		
+
 		__text_start = . ;
 		*(.init)
 		*(.text)
@@ -34,7 +34,7 @@ SECTIONS
 		*(.data)
 		*(COMMON)
 		__text_end  = . ;
-		
+
 		__bss_start__ = . ;
 		*(.bss)
 		__bss_end__ = . ;
